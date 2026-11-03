@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi2";
 
 const categories = [
@@ -44,11 +44,24 @@ const categories = [
   },
 ];
 
-const PAGE_SIZE = 3;
-const pageCount = Math.ceil(categories.length / PAGE_SIZE);
-
 export default function Categories() {
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(2);
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    const syncPageSize = () => setPageSize(media.matches ? 3 : 2);
+
+    syncPageSize();
+    media.addEventListener("change", syncPageSize);
+    return () => media.removeEventListener("change", syncPageSize);
+  }, []);
+
+  const pageCount = Math.ceil(categories.length / pageSize);
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, Math.max(pageCount - 1, 0)));
+  }, [pageCount]);
 
   return (
     <section className="bg-white px-8 pt-16 pb-6 md:px-16 md:pb-16 lg:px-20 lg:py-20">
@@ -77,7 +90,7 @@ export default function Categories() {
       <div className="mt-10">
         <div className="overflow-hidden">
           <ul
-            className="flex gap-4 transition-transform duration-500 ease-out md:gap-8 lg:gap-10 [--category-gap:1rem] md:[--category-gap:2rem] lg:[--category-gap:2.5rem]"
+            className="flex gap-3 transition-transform duration-500 ease-out md:gap-8 lg:gap-10 [--category-gap:0.75rem] md:[--category-gap:2rem] lg:[--category-gap:2.5rem]"
             style={{
               transform: `translateX(calc(-${page} * (100% + var(--category-gap))))`,
             }}
@@ -85,7 +98,7 @@ export default function Categories() {
             {categories.map((category) => (
               <li
                 key={category.name}
-                className="w-[calc((100%-2*var(--category-gap))/3)] shrink-0"
+                className="w-[calc((100%-var(--category-gap))/2)] shrink-0 md:w-[calc((100%-2*var(--category-gap))/3)]"
               >
                 <Link href={category.href} className="group block">
                   <div className="relative aspect-square overflow-hidden bg-[#f2f2f0]">
@@ -94,7 +107,7 @@ export default function Categories() {
                       alt={category.alt}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      sizes="(max-width: 768px) 30vw, 33vw"
+                      sizes="(max-width: 768px) 45vw, 33vw"
                     />
                   </div>
                   <p className="mt-3 text-[13px] text-foreground">
