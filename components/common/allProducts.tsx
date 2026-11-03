@@ -125,7 +125,7 @@ function QuantityIcons() {
 function ProductCard({
   product,
   imageBg = "bg-[#eceae6]",
-  sizes = "(max-width: 1024px) 30vw, 16vw",
+  sizes = "(max-width: 768px) 45vw, (max-width: 1024px) 30vw, 16vw",
 }: {
   product: Product;
   imageBg?: string;
@@ -209,20 +209,20 @@ function SplitCategory({
         </div>
 
         <div
-          className={`relative aspect-[2/3] w-full overflow-hidden lg:aspect-auto lg:h-full lg:min-h-full ${imageCol}`}
+          className={`relative mx-auto aspect-[4/5] w-[calc(100%-4rem)] overflow-hidden md:w-[calc(100%-8rem)] lg:aspect-auto lg:h-full lg:min-h-full lg:w-full ${imageCol}`}
         >
           <Image
             src={portrait.src}
             alt={portrait.alt}
             fill
             className={portrait.className ?? "object-cover object-center"}
-            sizes="(max-width: 1024px) 100vw, 50vw"
+            sizes="(max-width: 1024px) calc(100vw - 4rem), 50vw"
             priority={portrait.priority}
           />
         </div>
 
         <ul
-          className={`${productsCol} grid grid-cols-3 gap-3 px-5 pt-5 pb-12 md:gap-5 md:px-16 md:pt-8 md:pb-16 lg:px-20 lg:pt-0 lg:pb-20`}
+          className={`${productsCol} grid grid-cols-2 gap-3 px-5 pt-5 pb-12 md:grid-cols-3 md:gap-5 md:px-16 md:pt-8 md:pb-16 lg:px-20 lg:pt-0 lg:pb-20`}
         >
           {products.map((product) => (
             <li key={product.href}>
@@ -289,13 +289,13 @@ export default function AllProducts() {
           </Link>
         </div>
 
-        <ul className="mt-10 grid grid-cols-3 gap-3 md:gap-8 lg:gap-10">
+        <ul className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-8 lg:gap-10">
           {featuredProducts.map((product) => (
             <li key={product.href}>
               <ProductCard
                 product={product}
                 imageBg="bg-[#f2f2f0]"
-                sizes="(max-width: 768px) 30vw, 33vw"
+                sizes="(max-width: 768px) 45vw, 33vw"
               />
             </li>
           ))}
