@@ -224,9 +224,85 @@ const beautyAccessoriesMenu: NonNullable<NavLink["children"]> = [
   },
 ];
 
+const haircareMenu: NonNullable<NavLink["children"]> = [
+  {
+    title: "Hair Care",
+    items: [
+      { href: "/shop?category=haircare&type=shampoo", label: "Shampoo" },
+      { href: "/shop?category=haircare&type=conditioner", label: "Conditioner" },
+      { href: "/shop?category=haircare&type=hair-oil", label: "Hair Oil" },
+      {
+        href: "/shop?category=haircare&type=hair-cream-masks",
+        label: "Hair Cream & Masks",
+      },
+      { href: "/shop?category=haircare&type=hair-serum", label: "Hair Serum" },
+      {
+        href: "/shop?category=haircare&type=rebonding-kit",
+        label: "Rebonding Kit",
+      },
+      { href: "/shop?category=haircare&type=value-pack", label: "Value Pack" },
+    ],
+  },
+  {
+    title: "Hair Styling",
+    items: [
+      { href: "/shop?category=haircare&type=hair-color", label: "Hair Color" },
+      { href: "/shop?category=haircare&type=hair-spray", label: "Hair Spray" },
+      { href: "/shop?category=haircare&type=gels-waxes", label: "Gels & Waxes" },
+      { href: "/shop?category=haircare&type=hair-primer", label: "Hair Primer" },
+    ],
+  },
+  {
+    title: "Tools & Accessories",
+    items: [
+      { href: "/shop?category=haircare&type=hair-combs", label: "Hair Combs" },
+      {
+        href: "/shop?category=haircare&type=hair-straightener",
+        label: "Hair Straightener",
+      },
+      { href: "/shop?category=haircare&type=hair-dryer", label: "Hair Dryer" },
+      { href: "/shop?category=haircare&type=hair-band", label: "Hair Band" },
+    ],
+  },
+  {
+    title: "Shop by Hair Type & Concern",
+    items: [
+      {
+        href: "/shop?category=haircare&type=straight",
+        label: "Straight",
+      },
+      {
+        href: "/shop?category=haircare&type=curly-wavy",
+        label: "Curly & Wavy",
+      },
+      {
+        href: "/shop?category=haircare&concern=hairfall-thinning",
+        label: "Hairfall & Thinning",
+      },
+      { href: "/shop?category=haircare&concern=dandruff", label: "Dandruff" },
+      {
+        href: "/shop?category=haircare&concern=dry-frizzy",
+        label: "Dry & Frizzy Hair",
+      },
+      {
+        href: "/shop?category=haircare&concern=split-ends",
+        label: "Split Ends",
+      },
+      {
+        href: "/shop?category=haircare&concern=color-protection",
+        label: "Color Protection",
+      },
+    ],
+  },
+];
+
 const links: NavLink[] = [
   { href: "/", label: "Home" },
-  { href: "/shop?category=haircare", label: "Haircare" },
+  {
+    href: "/shop?category=haircare",
+    label: "Haircare",
+    children: haircareMenu,
+  },
   {
     href: "/shop?category=beauty-accessories",
     label: "Beauty Accessories",
