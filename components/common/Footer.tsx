@@ -1,8 +1,8 @@
-import { Lavishly_Yours } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import Link from "next/link";
 
-const lavishlyYours = Lavishly_Yours({
-  weight: "400",
+const montserrat = Montserrat({
+  weight: ["700", "800"],
   subsets: ["latin"],
 });
 
@@ -35,7 +35,7 @@ export default function Footer() {
         <div className="md:col-span-2 lg:col-span-1">
           <Link
             href="/"
-            className={`${lavishlyYours.className} text-4xl font-bold leading-none text-foreground [-webkit-text-stroke:0.5px_currentColor]`}
+            className={`${montserrat.className} text-2xl font-bold uppercase leading-none tracking-[0.25em] text-foreground`}
           >
             ZenLora
           </Link>
@@ -45,40 +45,42 @@ export default function Footer() {
           </p>
         </div>
 
-        <div>
-          <p className="text-[13px] font-bold tracking-wide text-foreground">
-            Shop
-          </p>
-          <ul className="mt-4 flex flex-col gap-3 text-[13px]">
-            {shopLinks.map((link) => (
-              <li key={link.label}>
-                <Link
-                  href={link.href}
-                  className="text-foreground/70 transition-colors hover:text-accent"
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <div className="grid grid-cols-2 gap-8 md:contents">
+          <div>
+            <p className="text-[13px] font-bold tracking-wide text-foreground">
+              Shop
+            </p>
+            <ul className="mt-4 flex flex-col gap-3 text-[13px]">
+              {shopLinks.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-foreground/70 transition-colors hover:text-accent"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-        <div>
-          <p className="text-[13px] font-bold tracking-wide text-foreground">
-            Discover
-          </p>
-          <ul className="mt-4 flex flex-col gap-3 text-[13px]">
-            {discoverLinks.map((link) => (
-              <li key={link.label}>
-                <Link
-                  href={link.href}
-                  className="text-foreground/70 transition-colors hover:text-accent"
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <div>
+            <p className="text-[13px] font-bold tracking-wide text-foreground">
+              Discover
+            </p>
+            <ul className="mt-4 flex flex-col gap-3 text-[13px]">
+              {discoverLinks.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-foreground/70 transition-colors hover:text-accent"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         <div>
