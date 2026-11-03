@@ -24,6 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${inter.variable} ${playfair.variable} h-full antialiased`}
+      style={{ colorScheme: "light" }}
     >
       <body className={`${inter.className} flex min-h-full flex-col`}>
         <Navbar />
