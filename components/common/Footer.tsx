@@ -26,6 +26,7 @@ const helpLinks = [
   { href: "/contact", label: "Contact" },
   { href: "/cart", label: "Cart" },
   { href: "/shop", label: "Shop All" },
+  { href: "/privacy-policy", label: "Privacy & Policy" },
 ];
 
 export default function Footer() {
