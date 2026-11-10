@@ -29,6 +29,10 @@ const productSchema = new Schema(
     description: { type: String, default: "", trim: true },
     images: { type: [String], default: [] },
     sizes: { type: [String], default: [] },
+    sizePrices: {
+      type: [{ size: String, price: String, images: { type: [String], default: [] } }],
+      default: [],
+    },
     inStock: { type: Boolean, default: true },
     brand: { type: String, default: "", trim: true },
     format: { type: String, default: "", trim: true },
