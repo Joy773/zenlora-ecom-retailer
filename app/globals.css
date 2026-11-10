@@ -24,6 +24,43 @@ body {
   color: #252525;
 }
 
+/* react-toastify — Zenlora palette */
+:root {
+  --toastify-color-light: #faf9f6;
+  --toastify-color-success: #b77b7b;
+  --toastify-color-progress-success: #b77b7b;
+  --toastify-icon-color-success: #b77b7b;
+  --toastify-text-color-light: #252525;
+  --toastify-toast-background: #faf9f6;
+  --toastify-color-progress-light: #e8cfcb;
+}
+
+.Toastify__toast {
+  border: 1px solid #e8cfcb;
+  border-radius: 0.75rem;
+  box-shadow: none;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.8125rem;
+}
+
+.Toastify__toast--success {
+  background: #faf9f6;
+  color: #252525;
+}
+
+.Toastify__progress-bar--success {
+  background: #b77b7b;
+}
+
+.Toastify__close-button {
+  color: #252525;
+  opacity: 0.55;
+}
+
+.Toastify__close-button:hover {
+  opacity: 1;
+}
+
 @layer base {
   h1,
   h2,
