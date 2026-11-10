@@ -9,6 +9,7 @@ import {
   HiOutlineShoppingBag,
   HiOutlineXMark,
 } from "react-icons/hi2";
+import { useCart } from "@/context/cart-context";
 import { ShopNowButton } from "./button";
 
 const montserrat = Montserrat({
@@ -17,7 +18,7 @@ const montserrat = Montserrat({
 });
 
 type NavLink = {
-  href: string;
+  href?: string;
   label: string;
   children?: { title: string; items: { href: string; label: string }[] }[];
 };
@@ -62,7 +63,7 @@ const skincareMenu: NonNullable<NavLink["children"]> = [
     ],
   },
   {
-    title: "Body, Hand & Feet",
+    title: "Bath & Body",
     items: [
       { href: "/shop?category=skincare&type=hand-cream", label: "Hand Creams" },
       { href: "/shop?category=skincare&type=foot-cream", label: "Foot Creams" },
@@ -124,43 +125,43 @@ const makeupMenu: NonNullable<NavLink["children"]> = [
   {
     title: "Face",
     items: [
-      { href: "/shop?category=makeup&type=primers", label: "Primers" },
+      { href: "/makeup?type=primers", label: "Primers" },
       {
-        href: "/shop?category=makeup&type=color-correctors",
+        href: "/makeup?type=color-correctors",
         label: "Color Correctors",
       },
-      { href: "/shop?category=makeup&type=foundations", label: "Foundations" },
-      { href: "/shop?category=makeup&type=bb-cc-creams", label: "BB & CC Creams" },
-      { href: "/shop?category=makeup&type=concealers", label: "Concealers" },
+      { href: "/makeup?type=foundations", label: "Foundations" },
+      { href: "/makeup?type=bb-cc-creams", label: "BB & CC Creams" },
+      { href: "/makeup?type=concealers", label: "Concealers" },
       {
-        href: "/shop?category=makeup&type=setting-powders",
+        href: "/makeup?type=setting-powders",
         label: "Setting Powders",
       },
-      { href: "/shop?category=makeup&type=setting-sprays", label: "Setting Sprays" },
-      { href: "/shop?category=makeup&type=blush", label: "Blush" },
-      { href: "/shop?category=makeup&type=bronzers", label: "Bronzers" },
-      { href: "/shop?category=makeup&type=highlighters", label: "Highlighters" },
-      { href: "/shop?category=makeup&type=contour", label: "Contour" },
+      { href: "/makeup?type=setting-sprays", label: "Setting Sprays" },
+      { href: "/makeup?type=blush", label: "Blush" },
+      { href: "/makeup?type=bronzers", label: "Bronzers" },
+      { href: "/makeup?type=highlighters", label: "Highlighters" },
+      { href: "/makeup?type=contour", label: "Contour" },
     ],
   },
   {
     title: "Eyes",
     items: [
-      { href: "/shop?category=makeup&type=eyeliner", label: "Eyeliner" },
-      { href: "/shop?category=makeup&type=mascara", label: "Mascara" },
+      { href: "/makeup?type=eyeliner", label: "Eyeliner" },
+      { href: "/makeup?type=mascara", label: "Mascara" },
       {
-        href: "/shop?category=makeup&type=lash-primers-serums",
+        href: "/makeup?type=lash-primers-serums",
         label: "Lash Primers & Serums",
       },
-      { href: "/shop?category=makeup&type=eyeshadow", label: "Eyeshadow" },
+      { href: "/makeup?type=eyeshadow", label: "Eyeshadow" },
       {
-        href: "/shop?category=makeup&type=glitter-pigments",
+        href: "/makeup?type=glitter-pigments",
         label: "Glitter & Pigments",
       },
-      { href: "/shop?category=makeup&type=eyebrows", label: "Eyebrows" },
-      { href: "/shop?category=makeup&type=eye-primers", label: "Eye Primers" },
+      { href: "/makeup?type=eyebrows", label: "Eyebrows" },
+      { href: "/makeup?type=eye-primers", label: "Eye Primers" },
       {
-        href: "/shop?category=makeup&type=false-lashes-glue",
+        href: "/makeup?type=false-lashes-glue",
         label: "False Lashes & Glue",
       },
     ],
@@ -168,56 +169,53 @@ const makeupMenu: NonNullable<NavLink["children"]> = [
   {
     title: "Lips",
     items: [
-      { href: "/shop?category=makeup&type=lipstick", label: "Lipstick" },
-      { href: "/shop?category=makeup&type=lip-gloss", label: "Lip Gloss" },
-      { href: "/shop?category=makeup&type=lip-liner", label: "Lip Liner" },
-      { href: "/shop?category=makeup&type=lip-plumpers", label: "Lip Plumpers" },
+      { href: "/makeup?type=lipstick", label: "Lipstick" },
+      { href: "/makeup?type=lip-gloss", label: "Lip Gloss" },
+      { href: "/makeup?type=lip-liner", label: "Lip Liner" },
+      { href: "/makeup?type=lip-plumpers", label: "Lip Plumpers" },
       {
-        href: "/shop?category=makeup&type=lip-balms-tints",
+        href: "/makeup?type=lip-balms-tints",
         label: "Lip Balms & Tints",
       },
       {
-        href: "/shop?category=makeup&type=lip-primers-scrubs",
+        href: "/makeup?type=lip-primers-scrubs",
         label: "Lip Primers & Scrubs",
       },
       {
-        href: "/shop?category=makeup&type=lip-masks-oils",
+        href: "/makeup?type=lip-masks-oils",
         label: "Lip Masks & Oils",
       },
     ],
   },
-];
-
-const beautyAccessoriesMenu: NonNullable<NavLink["children"]> = [
   {
-    title: "Tools & Accessories",
+    title: "Beauty Accessories",
     items: [
       {
-        href: "/shop?category=beauty-accessories&type=brush-sets",
+        href: "/makeup?type=brush-sets",
         label: "Brush Sets",
       },
       {
-        href: "/shop?category=beauty-accessories&type=face-brushes",
+        href: "/makeup?type=face-brushes",
         label: "Face Brushes",
       },
       {
-        href: "/shop?category=beauty-accessories&type=eye-brushes",
+        href: "/makeup?type=eye-brushes",
         label: "Eye Brushes",
       },
       {
-        href: "/shop?category=beauty-accessories&type=sponges-blenders",
+        href: "/makeup?type=sponges-blenders",
         label: "Makeup Sponges & Blenders",
       },
       {
-        href: "/shop?category=beauty-accessories&type=powder-puffs",
+        href: "/makeup?type=powder-puffs",
         label: "Powder Puffs",
       },
       {
-        href: "/shop?category=beauty-accessories&type=eyelash-curlers",
+        href: "/makeup?type=eyelash-curlers",
         label: "Eyelash Curlers",
       },
       {
-        href: "/shop?category=beauty-accessories&type=tweezers-sharpeners",
+        href: "/makeup?type=tweezers-sharpeners",
         label: "Tweezers & Pencil Sharpeners",
       },
     ],
@@ -228,70 +226,103 @@ const haircareMenu: NonNullable<NavLink["children"]> = [
   {
     title: "Hair Care",
     items: [
-      { href: "/shop?category=haircare&type=shampoo", label: "Shampoo" },
-      { href: "/shop?category=haircare&type=conditioner", label: "Conditioner" },
-      { href: "/shop?category=haircare&type=hair-oil", label: "Hair Oil" },
+      { href: "/haircare?type=shampoo", label: "Shampoo" },
+      { href: "/haircare?type=conditioner", label: "Conditioner" },
+      { href: "/haircare?type=hair-oil", label: "Hair Oil" },
       {
-        href: "/shop?category=haircare&type=hair-cream-masks",
+        href: "/haircare?type=hair-cream-masks",
         label: "Hair Cream & Masks",
       },
-      { href: "/shop?category=haircare&type=hair-serum", label: "Hair Serum" },
+      { href: "/haircare?type=hair-serum", label: "Hair Serum" },
       {
-        href: "/shop?category=haircare&type=rebonding-kit",
+        href: "/haircare?type=rebonding-kit",
         label: "Rebonding Kit",
       },
-      { href: "/shop?category=haircare&type=value-pack", label: "Value Pack" },
+      { href: "/haircare?type=value-pack", label: "Value Pack" },
     ],
   },
   {
     title: "Hair Styling",
     items: [
-      { href: "/shop?category=haircare&type=hair-color", label: "Hair Color" },
-      { href: "/shop?category=haircare&type=hair-spray", label: "Hair Spray" },
-      { href: "/shop?category=haircare&type=gels-waxes", label: "Gels & Waxes" },
-      { href: "/shop?category=haircare&type=hair-primer", label: "Hair Primer" },
+      { href: "/haircare?type=hair-color", label: "Hair Color" },
+      { href: "/haircare?type=hair-spray", label: "Hair Spray" },
+      { href: "/haircare?type=gels-waxes", label: "Gels & Waxes" },
+      { href: "/haircare?type=hair-primer", label: "Hair Primer" },
     ],
   },
   {
     title: "Tools & Accessories",
     items: [
-      { href: "/shop?category=haircare&type=hair-combs", label: "Hair Combs" },
+      { href: "/haircare?type=hair-combs", label: "Hair Combs" },
       {
-        href: "/shop?category=haircare&type=hair-straightener",
+        href: "/haircare?type=hair-straightener",
         label: "Hair Straightener",
       },
-      { href: "/shop?category=haircare&type=hair-dryer", label: "Hair Dryer" },
-      { href: "/shop?category=haircare&type=hair-band", label: "Hair Band" },
+      { href: "/haircare?type=hair-dryer", label: "Hair Dryer" },
+      { href: "/haircare?type=hair-band", label: "Hair Band" },
     ],
   },
   {
     title: "Shop by Hair Type & Concern",
     items: [
       {
-        href: "/shop?category=haircare&type=straight",
+        href: "/haircare?type=straight",
         label: "Straight",
       },
       {
-        href: "/shop?category=haircare&type=curly-wavy",
+        href: "/haircare?type=curly-wavy",
         label: "Curly & Wavy",
       },
       {
-        href: "/shop?category=haircare&concern=hairfall-thinning",
+        href: "/haircare?concern=hairfall-thinning",
         label: "Hairfall & Thinning",
       },
-      { href: "/shop?category=haircare&concern=dandruff", label: "Dandruff" },
+      { href: "/haircare?concern=dandruff", label: "Dandruff" },
       {
-        href: "/shop?category=haircare&concern=dry-frizzy",
+        href: "/haircare?concern=dry-frizzy",
         label: "Dry & Frizzy Hair",
       },
       {
-        href: "/shop?category=haircare&concern=split-ends",
+        href: "/haircare?concern=split-ends",
         label: "Split Ends",
       },
       {
-        href: "/shop?category=haircare&concern=color-protection",
+        href: "/haircare?concern=color-protection",
         label: "Color Protection",
       },
+    ],
+  },
+];
+
+const bestSellersMenu: NonNullable<NavLink["children"]> = [
+  {
+    title: "Categories",
+    items: [
+      { href: "/makeup", label: "Makeup" },
+      { href: "/skincare", label: "Skincare" },
+      { href: "/haircare", label: "Haircare" },
+    ],
+  },
+];
+
+const newArrivalsMenu: NonNullable<NavLink["children"]> = [
+  {
+    title: "Categories",
+    items: [
+      { href: "/makeup", label: "Makeup" },
+      { href: "/skincare", label: "Skincare" },
+      { href: "/haircare", label: "Haircare" },
+    ],
+  },
+];
+
+const offersMenu: NonNullable<NavLink["children"]> = [
+  {
+    title: "Categories",
+    items: [
+      { href: "/makeup", label: "Makeup" },
+      { href: "/skincare", label: "Skincare" },
+      { href: "/haircare", label: "Haircare" },
     ],
   },
 ];
@@ -299,41 +330,53 @@ const haircareMenu: NonNullable<NavLink["children"]> = [
 const links: NavLink[] = [
   { href: "/", label: "Home" },
   {
-    href: "/shop?category=haircare",
+    href: "/haircare",
     label: "Haircare",
     children: haircareMenu,
   },
   {
-    href: "/shop?category=beauty-accessories",
-    label: "Beauty Accessories",
-    children: beautyAccessoriesMenu,
+    label: "Best Sellers",
+    children: bestSellersMenu,
   },
-  { href: "/brands", label: "Brands" },
-  { href: "/shop?sort=best-sellers", label: "Best Sellers" },
   {
-    href: "/shop?category=skincare",
+    href: "/skincare",
     label: "Skincare",
     children: skincareMenu,
   },
   {
-    href: "/shop?category=makeup",
+    href: "/makeup",
     label: "Makeup",
     children: makeupMenu,
   },
-  { href: "/shop?category=bath-body", label: "Bath & Body" },
-  { href: "/shop?sort=new", label: "New Arrivals" },
-  { href: "/offers", label: "Offers" },
+  {
+    label: "New Arrivals",
+    children: newArrivalsMenu,
+  },
+  {
+    label: "Offers",
+    children: offersMenu,
+  },
 ];
 
 function CartIcon({ onClick }: { onClick?: () => void }) {
+  const { itemCount, isHydrated } = useCart();
+  const showCount = isHydrated && itemCount > 0;
+
   return (
     <Link
       href="/cart"
       onClick={onClick}
-      aria-label="Shopping cart"
+      aria-label={
+        showCount ? `Shopping cart, ${itemCount} items` : "Shopping cart"
+      }
       className="group relative flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-foreground transition-all duration-200 hover:border-primary hover:bg-primary/50 hover:text-accent"
     >
       <HiOutlineShoppingBag className="h-6 w-6 stroke-[1.4] transition-transform duration-200 group-hover:scale-105" />
+      {showCount ? (
+        <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
+          {itemCount > 99 ? "99+" : itemCount}
+        </span>
+      ) : null}
     </Link>
   );
 }
@@ -361,12 +404,18 @@ export default function Navbar() {
         <ul className="hidden flex-1 flex-wrap items-center justify-center gap-x-7 gap-y-2 text-xs tracking-wide lg:flex lg:gap-x-9 lg:text-sm">
           {links.map((link) => (
             <li key={link.label} className="relative group">
-              <Link
-                href={link.href}
-                className="whitespace-nowrap font-bold text-foreground/80 transition-colors hover:text-accent group-hover:text-accent"
-              >
-                {link.label}
-              </Link>
+              {link.href ? (
+                <Link
+                  href={link.href}
+                  className="whitespace-nowrap font-bold text-foreground/80 transition-colors hover:text-accent group-hover:text-accent"
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <span className="cursor-default whitespace-nowrap font-bold text-foreground/80 transition-colors group-hover:text-accent">
+                  {link.label}
+                </span>
+              )}
 
               {link.children ? (
                 <div className="invisible absolute top-full left-1/2 z-50 w-max max-w-[90vw] -translate-x-1/2 pt-4 opacity-0 transition duration-200 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
@@ -442,13 +491,26 @@ export default function Navbar() {
                   {link.children ? (
                     <div>
                       <div className="flex items-center justify-between gap-3">
-                        <Link
-                          href={link.href}
-                          onClick={closeMenu}
-                          className="font-bold text-foreground/80 transition-colors hover:text-accent"
-                        >
-                          {link.label}
-                        </Link>
+                        {link.href ? (
+                          <Link
+                            href={link.href}
+                            onClick={closeMenu}
+                            className="font-bold text-foreground/80 transition-colors hover:text-accent"
+                          >
+                            {link.label}
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedMobile(isExpanded ? null : link.label)
+                            }
+                            className="font-bold text-foreground/80 transition-colors hover:text-accent"
+                            aria-expanded={isExpanded}
+                          >
+                            {link.label}
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() =>
@@ -489,7 +551,7 @@ export default function Navbar() {
                         </div>
                       ) : null}
                     </div>
-                  ) : (
+                  ) : link.href ? (
                     <Link
                       href={link.href}
                       onClick={closeMenu}
@@ -497,6 +559,10 @@ export default function Navbar() {
                     >
                       {link.label}
                     </Link>
+                  ) : (
+                    <span className="block font-bold text-foreground/80">
+                      {link.label}
+                    </span>
                   )}
                 </li>
               );
