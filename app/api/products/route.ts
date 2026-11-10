@@ -1,0 +1,256 @@
+import mongoose from "mongoose";
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { uploadProductImage } from "@/lib/cloudinary";
+import { connectMongoose } from "@/lib/mongoose";
+import { Product } from "@/models/Product";
+
+function text(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function flag(formData: FormData, key: string) {
+  return text(formData, key) === "true";
+}
+
+export async function GET() {
+  const session = await auth();
+
+  if (!session?.user) {
+    return NextResponse.json(
+      { error: "You must be signed in to view products." },
+      { status: 401 },
+    );
+  }
+
+  await connectMongoose();
+
+  const products = await Product.find().sort({ createdAt: -1 }).lean();
+
+  return NextResponse.json({
+    products: products.map((product) => ({
+      id: String(product._id),
+      name: product.name,
+      price: product.price,
+      discountedPrice: product.discountedPrice ?? "",
+      discount: product.discount ?? null,
+      quantity: product.quantity,
+      description: product.description ?? "",
+      images: product.images ?? [],
+      sizes: product.sizes ?? [],
+      inStock: product.inStock ?? true,
+      brand: product.brand ?? "",
+      format: product.format ?? "",
+      aboutBrand: product.aboutBrand ?? "",
+      shipping: product.shipping ?? "",
+      category: product.category,
+      subcategory: product.subcategory,
+      isNewArrival: Boolean(product.isNewArrival),
+      isOffer: Boolean(product.isOffer),
+    })),
+  });
+}
+
+export async function POST(request: Request) {
+  const session = await auth();
+
+  if (!session?.user) {
+    return NextResponse.json(
+      { error: "You must be signed in to save a product." },
+      { status: 401 },
+    );
+  }
+
+  const formData = await request.formData();
+  const name = text(formData, "name");
+  const price = text(formData, "price");
+  const quantity = Number(text(formData, "quantity"));
+  const category = text(formData, "category");
+  const subcategory = text(formData, "subcategory");
+
+  if (!name || !price || !category || !subcategory || !Number.isFinite(quantity)) {
+    return NextResponse.json(
+      { error: "Name, price, quantity, category, and subcategory are required." },
+      { status: 400 },
+    );
+  }
+
+  if (quantity < 0) {
+    return NextResponse.json(
+      { error: "Quantity cannot be negative." },
+      { status: 400 },
+    );
+  }
+
+  const files = formData
+    .getAll("images")
+    .filter((value): value is File => value instanceof File && value.size > 0);
+
+  let images: string[] = [];
+
+  try {
+    images = await Promise.all(files.map((file) => uploadProductImage(file)));
+  } catch (error) {
+    const message =
+      error instanceof Error && error.message === "Cloudinary is not configured"
+        ? "Add Cloudinary keys in .env.local before saving product images."
+        : "Could not upload the product images.";
+
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+
+  await connectMongoose();
+
+  const product = await Product.create({
+    name,
+    price,
+    discountedPrice: text(formData, "discountedPrice"),
+    quantity,
+    description: text(formData, "description"),
+    images,
+    sizes: formData
+      .getAll("sizes")
+      .filter((value): value is string => typeof value === "string")
+      .map((value) => value.trim())
+      .filter(Boolean),
+    inStock: flag(formData, "inStock"),
+    brand: text(formData, "brand"),
+    format: text(formData, "format"),
+    aboutBrand: text(formData, "aboutBrand"),
+    shipping: text(formData, "shipping"),
+    category,
+    subcategory,
+    isNewArrival: flag(formData, "isNewArrival"),
+    isOffer: flag(formData, "isOffer"),
+  });
+
+  return NextResponse.json({ id: product._id.toString() });
+}
+
+export async function PATCH(request: Request) {
+  const session = await auth();
+
+  if (!session?.user) {
+    return NextResponse.json(
+      { error: "You must be signed in to update a product." },
+      { status: 401 },
+    );
+  }
+
+  const formData = await request.formData();
+  const id = text(formData, "id");
+  const name = text(formData, "name");
+  const price = text(formData, "price");
+  const quantity = Number(text(formData, "quantity"));
+  const category = text(formData, "category");
+  const subcategory = text(formData, "subcategory");
+
+  if (!mongoose.isValidObjectId(id)) {
+    return NextResponse.json(
+      { error: "A valid product id is required." },
+      { status: 400 },
+    );
+  }
+
+  if (!name || !price || !category || !subcategory || !Number.isFinite(quantity)) {
+    return NextResponse.json(
+      { error: "Name, price, quantity, category, and subcategory are required." },
+      { status: 400 },
+    );
+  }
+
+  if (quantity < 0) {
+    return NextResponse.json(
+      { error: "Quantity cannot be negative." },
+      { status: 400 },
+    );
+  }
+
+  const existingImages = formData
+    .getAll("existingImages")
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim())
+    .filter((value) => value.startsWith("https://res.cloudinary.com/"));
+
+  const files = formData
+    .getAll("images")
+    .filter((value): value is File => value instanceof File && value.size > 0);
+
+  let uploadedImages: string[] = [];
+
+  try {
+    uploadedImages = await Promise.all(files.map((file) => uploadProductImage(file)));
+  } catch (error) {
+    const message =
+      error instanceof Error && error.message === "Cloudinary is not configured"
+        ? "Add Cloudinary keys in .env.local before saving product images."
+        : "Could not upload the product images.";
+
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+
+  await connectMongoose();
+
+  const product = await Product.findById(id);
+
+  if (!product) {
+    return NextResponse.json({ error: "Product was not found." }, { status: 404 });
+  }
+
+  product.name = name;
+  product.price = price;
+  product.discountedPrice = text(formData, "discountedPrice");
+  product.quantity = quantity;
+  product.description = text(formData, "description");
+  product.images = [...existingImages, ...uploadedImages];
+  product.sizes = formData
+    .getAll("sizes")
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  product.inStock = flag(formData, "inStock");
+  product.brand = text(formData, "brand");
+  product.format = text(formData, "format");
+  product.aboutBrand = text(formData, "aboutBrand");
+  product.shipping = text(formData, "shipping");
+  product.category = category;
+  product.subcategory = subcategory;
+  product.isNewArrival = flag(formData, "isNewArrival");
+  product.isOffer = flag(formData, "isOffer");
+
+  await product.save();
+
+  return NextResponse.json({ id: product._id.toString() });
+}
+
+export async function DELETE(request: Request) {
+  const session = await auth();
+
+  if (!session?.user) {
+    return NextResponse.json(
+      { error: "You must be signed in to delete a product." },
+      { status: 401 },
+    );
+  }
+
+  const body = (await request.json().catch(() => null)) as { id?: string } | null;
+  const id = typeof body?.id === "string" ? body.id.trim() : "";
+
+  if (!mongoose.isValidObjectId(id)) {
+    return NextResponse.json(
+      { error: "A valid product id is required." },
+      { status: 400 },
+    );
+  }
+
+  await connectMongoose();
+
+  const product = await Product.findByIdAndDelete(id);
+
+  if (!product) {
+    return NextResponse.json({ error: "Product was not found." }, { status: 404 });
+  }
+
+  return NextResponse.json({ id });
+}
