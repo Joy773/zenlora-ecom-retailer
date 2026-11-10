@@ -15,6 +15,7 @@ export type ProductFormValues = {
   description?: string;
   imageNames?: string[];
   sizes?: string[];
+  sizePrices?: { size: string; price: string; images?: string[] }[];
   inStock?: boolean;
   brand?: string;
   format?: string;
@@ -85,7 +86,13 @@ export function AddProductModal({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<ProductImageItem[]>([]);
   const [sizeInput, setSizeInput] = useState("");
+  const [sizePriceInput, setSizePriceInput] = useState("");
   const [sizes, setSizes] = useState<string[]>([]);
+  const [sizePrices, setSizePrices] = useState<
+    { size: string; price: string; images: string[] }[]
+  >([]);
+  const [sizeImageFiles, setSizeImageFiles] = useState<Record<string, File[]>>({});
+  const sizeImageInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [inStock, setInStock] = useState(true);
   const [brand, setBrand] = useState("Zenlora");
   const [format, setFormat] = useState("");
@@ -104,8 +111,8 @@ export function AddProductModal({
   );
 
   const discountPercent = useMemo(
-    () => getDiscountPercent(price, discountedPrice),
-    [price, discountedPrice],
+    () => getDiscountPercent(sizePrices[0]?.price ?? price, discountedPrice),
+    [price, discountedPrice, sizePrices],
   );
 
   const resetForm = () => {
@@ -119,7 +126,10 @@ export function AddProductModal({
       return [];
     });
     setSizeInput("");
+    setSizePriceInput("");
     setSizes([]);
+    setSizePrices([]);
+    setSizeImageFiles({});
     setInStock(true);
     setBrand("Zenlora");
     setFormat("");
@@ -144,14 +154,22 @@ export function AddProductModal({
       setDescription(initialValues.description ?? "");
       setImages((current) => {
         releaseImages(current);
-        return (initialValues.imageNames ?? []).map((name) => ({
+        return (initialValues.imageNames ?? []).slice(0, 1).map((name) => ({
           id: name,
           name,
           previewUrl: name.startsWith("http") ? name : undefined,
         }));
       });
       setSizeInput("");
+      setSizePriceInput("");
       setSizes(initialValues.sizes ?? []);
+      setSizePrices(
+        (initialValues.sizePrices ?? []).map((variant) => ({
+          ...variant,
+          images: variant.images ?? [],
+        })),
+      );
+      setSizeImageFiles({});
       setInStock(initialValues.inStock ?? true);
       setBrand(initialValues.brand ?? "Zenlora");
       setFormat(initialValues.format ?? "");
@@ -188,14 +206,18 @@ export function AddProductModal({
   const addImages = (fileList: FileList | null) => {
     if (!fileList?.length) return;
 
-    const next = Array.from(fileList).map((file) => ({
+    const file = fileList[0];
+    const next = {
       id: `${file.name}-${file.lastModified}-${file.size}-${crypto.randomUUID()}`,
       name: file.name,
       file,
       previewUrl: URL.createObjectURL(file),
-    }));
+    };
 
-    setImages((current) => [...current, ...next]);
+    setImages((current) => {
+      releaseImages(current);
+      return [next];
+    });
 
     if (imageInputRef.current) {
       imageInputRef.current.value = "";
@@ -212,22 +234,45 @@ export function AddProductModal({
 
   const addSize = () => {
     const next = sizeInput.trim();
-    if (!next) return;
+    const nextPrice = sizePriceInput.trim();
+    if (!next || !nextPrice) return;
 
-    setSizes((current) =>
-      current.some((item) => item.toLowerCase() === next.toLowerCase())
-        ? current
-        : [...current, next],
-    );
+    if (sizes.some((item) => item.toLowerCase() === next.toLowerCase())) return;
+    setSizes((current) => [...current, next]);
+    setSizePrices((current) => [...current, { size: next, price: nextPrice, images: [] }]);
     setSizeInput("");
+    setSizePriceInput("");
   };
 
   const removeSize = (size: string) => {
     setSizes((current) => current.filter((item) => item !== size));
+    setSizePrices((current) => current.filter((item) => item.size !== size));
+    setSizeImageFiles((current) => {
+      const next = { ...current };
+      delete next[size];
+      return next;
+    });
+  };
+
+  const addSizeImages = (size: string, fileList: FileList | null) => {
+    if (!fileList?.length) return;
+    const files = Array.from(fileList);
+    setSizeImageFiles((current) => ({
+      ...current,
+      [size]: [...(current[size] ?? []), ...files],
+    }));
+    if (sizeImageInputRefs.current[size]) {
+      sizeImageInputRefs.current[size]!.value = "";
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (!sizePrices[0]?.price && !price) {
+      setFormError("Add at least one size with a price before saving.");
+      return;
+    }
 
     setIsSaving(true);
     setFormError("");
@@ -237,7 +282,7 @@ export function AddProductModal({
       formData.set("id", initialValues?.id ?? "");
     }
     formData.set("name", name);
-    formData.set("price", price);
+    formData.set("price", sizePrices[0]?.price ?? price);
     formData.set("discountedPrice", discountedPrice);
     formData.set("quantity", quantity);
     formData.set("description", description);
@@ -251,6 +296,13 @@ export function AddProductModal({
     formData.set("isNewArrival", String(isNewArrival));
     formData.set("isOffer", String(isOffer));
     sizes.forEach((size) => formData.append("sizes", size));
+    formData.set("sizePrices", JSON.stringify(sizePrices));
+    sizePrices.forEach((variant) => {
+      (sizeImageFiles[variant.size] ?? []).forEach((file) => {
+        formData.append("sizeImages", file);
+        formData.append("sizeImageSizes", variant.size);
+      });
+    });
     images.forEach((image) => {
       if (image.file) {
         formData.append("images", image.file);
@@ -337,21 +389,6 @@ export function AddProductModal({
             />
           </label>
 
-          <label className="flex flex-col gap-2">
-            <span className="text-[12px] font-medium tracking-wide text-foreground/70">
-              Price
-            </span>
-            <input
-              type="text"
-              name="price"
-              required
-              value={price}
-              onChange={(event) => setPrice(event.target.value)}
-              className={inputClassName}
-              placeholder="$19"
-            />
-          </label>
-
           <div className="rounded-xl border border-primary bg-white p-4">
             <label className="flex flex-col gap-2">
               <span className="text-[12px] font-medium tracking-wide text-foreground/70">
@@ -427,7 +464,6 @@ export function AddProductModal({
               type="file"
               name="images"
               accept="image/*"
-              multiple
               onChange={(event) => addImages(event.target.files)}
               className="sr-only"
             />
@@ -497,6 +533,20 @@ export function AddProductModal({
                 placeholder="50 ML"
                 aria-label="Size"
               />
+              <input
+                type="text"
+                value={sizePriceInput}
+                onChange={(event) => setSizePriceInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    addSize();
+                  }
+                }}
+                className={`${inputClassName} w-28`}
+                placeholder="Price"
+                aria-label="Size price"
+              />
               <Button type="button" variant="outline" onClick={addSize}>
                 Add
               </Button>
@@ -506,8 +556,34 @@ export function AddProductModal({
                 {sizes.map((size) => (
                   <li key={size}>
                     <input type="hidden" name="sizes" value={size} />
+                    {(() => {
+                      const variant = sizePrices.find((item) => item.size === size);
+                      const imageCount =
+                        (variant?.images?.length ?? 0) +
+                        (sizeImageFiles[size]?.length ?? 0);
+
+                      return (
                     <span className="inline-flex items-center gap-1 rounded-full border border-primary bg-white py-1 pr-1 pl-3 text-[13px] text-foreground">
-                      {size}
+                      {size} · {variant?.price}
+                      <input
+                        ref={(element) => {
+                          sizeImageInputRefs.current[size] = element;
+                        }}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="sr-only"
+                        onChange={(event) => addSizeImages(size, event.target.files)}
+                        aria-label={`Add images for ${size}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => sizeImageInputRefs.current[size]?.click()}
+                        className="px-1 text-accent"
+                        aria-label={`Add images for ${size}`}
+                      >
+                        {imageCount > 0 ? `${imageCount} image${imageCount === 1 ? "" : "s"}` : "+ image"}
+                      </button>
                       <button
                         type="button"
                         onClick={() => removeSize(size)}
@@ -517,6 +593,8 @@ export function AddProductModal({
                         <HiOutlineXMark className="h-3.5 w-3.5" />
                       </button>
                     </span>
+                      );
+                    })()}
                   </li>
                 ))}
               </ul>
