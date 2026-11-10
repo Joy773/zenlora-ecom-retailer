@@ -24,6 +24,7 @@ type SavedProduct = {
   description: string;
   images: string[];
   sizes: string[];
+  sizePrices: { size: string; price: string; images?: string[] }[];
   inStock: boolean;
   brand: string;
   format: string;
@@ -69,6 +70,7 @@ function toFormValues(product: AdminProduct): ProductFormValues {
     description: product.description,
     imageNames: product.images,
     sizes: product.sizes,
+    sizePrices: product.sizePrices,
     inStock: product.inStock,
     brand: product.brand,
     format: product.format,
