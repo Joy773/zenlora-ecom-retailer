@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
-import Footer from "@/components/common/Footer";
-import Navbar from "@/components/common/navbar";
+import Providers from "@/components/providers";
+import SiteShell from "@/components/site-shell";
 import "./globals.css";
 
 const inter = Inter({
@@ -27,9 +27,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       style={{ colorScheme: "light" }}
     >
       <body className={`${inter.className} flex min-h-full flex-col`}>
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <Providers>
+          <SiteShell>{children}</SiteShell>
+        </Providers>
       </body>
     </html>
   );
