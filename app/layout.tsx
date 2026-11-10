@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter, Playfair_Display } from "next/font/google";
 import Providers from "@/components/providers";
 import SiteShell from "@/components/site-shell";
@@ -28,7 +29,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className={`${inter.className} flex min-h-full flex-col`}>
         <Providers>
-          <SiteShell>{children}</SiteShell>
+          <Suspense fallback={<main className="flex-1">{children}</main>}>
+            <SiteShell>{children}</SiteShell>
+          </Suspense>
         </Providers>
       </body>
     </html>
