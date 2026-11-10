@@ -15,6 +15,8 @@ type ButtonProps = {
   variant?: ButtonVariant;
   className?: string;
   type?: "button" | "submit" | "reset";
+  onClick?: () => void;
+  disabled?: boolean;
 };
 
 export default function Button({
@@ -23,19 +25,21 @@ export default function Button({
   variant = "primary",
   className = "",
   type = "button",
+  onClick,
+  disabled = false,
 }: ButtonProps) {
-  const classes = `inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium tracking-wide transition-colors ${variantClasses[variant]} ${className}`;
+  const classes = `inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${variantClasses[variant]} ${className}`;
 
   if (href) {
     return (
-      <Link href={href} className={classes}>
+      <Link href={href} className={classes} onClick={onClick}>
         {children}
       </Link>
     );
   }
 
   return (
-    <button type={type} className={classes}>
+    <button type={type} className={classes} onClick={onClick} disabled={disabled}>
       {children}
     </button>
   );
@@ -43,7 +47,7 @@ export default function Button({
 
 export function ShopNowButton() {
   return (
-    <Button href="/shop" variant="accent">
+    <Button href="/skincare" variant="accent">
       Shop Now
     </Button>
   );
@@ -53,6 +57,117 @@ export function ShopTheBrandButton() {
   return (
     <Button href="/shop" variant="primary">
       Shop the brand
+    </Button>
+  );
+}
+
+export function AddToCartButton({
+  onClick,
+  className = "",
+}: {
+  onClick?: () => void;
+  className?: string;
+}) {
+  return (
+    <Button
+      variant="accent"
+      className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-medium tracking-wide sm:px-3.5 ${className}`}
+      onClick={onClick}
+    >
+      Add to Cart
+    </Button>
+  );
+}
+
+export function AddProductButton({
+  onClick,
+  className = "",
+}: {
+  onClick?: () => void;
+  className?: string;
+}) {
+  return (
+    <Button
+      variant="accent"
+      className={`shrink-0 ${className}`}
+      onClick={onClick}
+    >
+      Add Product
+    </Button>
+  );
+}
+
+const adminActionClassName =
+  "shrink-0 rounded-full px-3 py-1.5 text-[11px] font-medium tracking-wide";
+
+export function ActiveButton({
+  onClick,
+  className = "",
+}: {
+  onClick?: () => void;
+  className?: string;
+}) {
+  return (
+    <Button
+      variant="accent"
+      className={`${adminActionClassName} ${className}`}
+      onClick={onClick}
+    >
+      Active
+    </Button>
+  );
+}
+
+export function DisableButton({
+  onClick,
+  className = "",
+}: {
+  onClick?: () => void;
+  className?: string;
+}) {
+  return (
+    <Button
+      variant="outline"
+      className={`${adminActionClassName} ${className}`}
+      onClick={onClick}
+    >
+      Disable
+    </Button>
+  );
+}
+
+export function DeleteButton({
+  onClick,
+  className = "",
+}: {
+  onClick?: () => void;
+  className?: string;
+}) {
+  return (
+    <Button
+      variant="outline"
+      className={`${adminActionClassName} border-foreground/25 text-foreground/70 hover:border-foreground hover:bg-foreground hover:text-white ${className}`}
+      onClick={onClick}
+    >
+      Delete
+    </Button>
+  );
+}
+
+export function UpdateButton({
+  onClick,
+  className = "",
+}: {
+  onClick?: () => void;
+  className?: string;
+}) {
+  return (
+    <Button
+      variant="primary"
+      className={`${adminActionClassName} ${className}`}
+      onClick={onClick}
+    >
+      Update
     </Button>
   );
 }
