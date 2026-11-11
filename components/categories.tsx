@@ -19,8 +19,8 @@ const categories = [
     alt: "White bottle of facial toner standing in front of its box",
   },
   {
-    href: "/shop?category=serums",
-    name: "Serums",
+    href: "/shop?category=serum-oils",
+    name: "Serum / Oils",
     image: "/categories/serum.jpg",
     alt: "Open glass serum bottle with a white dropper beside it",
   },
