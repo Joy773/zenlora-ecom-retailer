@@ -28,7 +28,13 @@ type SavedProduct = {
   seoSlug: string;
   images: string[];
   sizes: string[];
-  sizePrices: { size: string; price: string; discountedPrice?: string; images?: string[] }[];
+  sizePrices: {
+    size: string;
+    price: string;
+    discountedPrice?: string;
+    discountPercent?: number | null;
+    images?: string[];
+  }[];
   inStock: boolean;
   brand: string;
   format: string;
@@ -76,7 +82,6 @@ function toFormValues(product: AdminProduct): ProductFormValues {
     seoMetaTitle: product.seoMetaTitle,
     seoMetaDescription: product.seoMetaDescription,
     seoSlug: product.seoSlug,
-    imageNames: product.images,
     sizes: product.sizes,
     sizePrices: product.sizePrices,
     inStock: product.inStock,
