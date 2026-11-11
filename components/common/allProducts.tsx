@@ -671,10 +671,10 @@ export default function AllProducts() {
         imageSide="right"
       />
       <SplitCategory
-        title="Serums"
+        title="Serum / Oils"
         description="Concentrated treatments designed to brighten, repair, and plump. A few drops at a time."
-        shopHref="/shop?category=serums"
-        shopLabel="Shop All Serums"
+        shopHref="/shop?category=serum-oils"
+        shopLabel="Shop All Serum / Oils"
         products={serumProducts}
         portrait={{
           src: "/products/serum-portrait.jpg",
