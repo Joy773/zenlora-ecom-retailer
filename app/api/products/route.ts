@@ -71,6 +71,10 @@ export async function GET() {
       discount: product.discount ?? null,
       quantity: product.quantity,
       description: product.description ?? "",
+      additionalInformation: product.additionalInformation ?? "",
+      seoMetaTitle: product.seoMetaTitle ?? "",
+      seoMetaDescription: product.seoMetaDescription ?? "",
+      seoSlug: product.seoSlug ?? "",
       images: product.images ?? [],
       sizes: product.sizes ?? [],
       sizePrices: product.sizePrices ?? [],
@@ -150,6 +154,10 @@ export async function POST(request: Request) {
     discountedPrice: text(formData, "discountedPrice"),
     quantity,
     description: text(formData, "description"),
+    additionalInformation: text(formData, "additionalInformation"),
+    seoMetaTitle: text(formData, "seoMetaTitle"),
+    seoMetaDescription: text(formData, "seoMetaDescription"),
+    seoSlug: text(formData, "seoSlug"),
     images,
     sizes: formData
       .getAll("sizes")
@@ -253,6 +261,10 @@ export async function PATCH(request: Request) {
   product.discountedPrice = text(formData, "discountedPrice");
   product.quantity = quantity;
   product.description = text(formData, "description");
+  product.additionalInformation = text(formData, "additionalInformation");
+  product.seoMetaTitle = text(formData, "seoMetaTitle");
+  product.seoMetaDescription = text(formData, "seoMetaDescription");
+  product.seoSlug = text(formData, "seoSlug");
   product.images = [...existingImages, ...uploadedImages];
   product.sizes = formData
     .getAll("sizes")
