@@ -22,19 +22,23 @@ export function getDiscountPercent(price: string, discountedPrice: string) {
 const productSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
-    price: { type: String, required: true, trim: true },
-    discountedPrice: { type: String, default: "", trim: true },
-    discount: { type: Number, default: null },
     quantity: { type: Number, required: true, min: 0 },
     description: { type: String, default: "", trim: true },
     additionalInformation: { type: String, default: "", trim: true },
     seoMetaTitle: { type: String, default: "", trim: true, maxlength: 60 },
     seoMetaDescription: { type: String, default: "", trim: true, maxlength: 160 },
     seoSlug: { type: String, default: "", trim: true, lowercase: true },
-    images: { type: [String], default: [] },
     sizes: { type: [String], default: [] },
     sizePrices: {
-      type: [{ size: String, price: String, discountedPrice: String, images: { type: [String], default: [] } }],
+      type: [
+        {
+          size: String,
+          price: String,
+          discountedPrice: String,
+          discountPercent: { type: Number, default: null },
+          images: { type: [String], default: [] },
+        },
+      ],
       default: [],
     },
     inStock: { type: Boolean, default: true },
@@ -51,7 +55,12 @@ const productSchema = new Schema(
 );
 
 productSchema.pre("validate", function () {
-  this.discount = getDiscountPercent(this.price, this.discountedPrice ?? "");
+  this.sizePrices.forEach((variant) => {
+    variant.discountPercent = getDiscountPercent(
+      variant.price ?? "",
+      variant.discountedPrice ?? "",
+    );
+  });
 });
 
 export type ProductDocument = InferSchemaType<typeof productSchema>;
