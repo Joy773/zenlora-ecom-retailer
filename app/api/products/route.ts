@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { uploadProductImage } from "@/lib/cloudinary";
 import { connectMongoose } from "@/lib/mongoose";
-import { Product } from "@/models/Product";
+import { getDiscountPercent, Product } from "@/models/Product";
 
 function text(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -25,7 +25,12 @@ function sizePrices(
     const parsed = JSON.parse(value) as unknown;
     if (!Array.isArray(parsed)) return [];
     const variants = parsed.filter(
-      (item): item is { size: string; price: string; images?: string[] } =>
+      (item): item is {
+        size: string;
+        price: string;
+        discountedPrice?: string;
+        images?: string[];
+      } =>
         Boolean(item) &&
         typeof item === "object" &&
         typeof (item as { size?: unknown }).size === "string" &&
@@ -38,6 +43,7 @@ function sizePrices(
     );
     return variants.map((variant) => ({
       ...variant,
+      discountPercent: getDiscountPercent(variant.price, variant.discountedPrice ?? ""),
       images: [
         ...(Array.isArray(variant.images) ? variant.images : []),
         ...uploadedImages.filter((_, index) => sizes[index] === variant.size),
@@ -66,18 +72,24 @@ export async function GET() {
     products: products.map((product) => ({
       id: String(product._id),
       name: product.name,
-      price: product.price,
-      discountedPrice: product.discountedPrice ?? "",
-      discount: product.discount ?? null,
+      price: product.sizePrices?.[0]?.price ?? "",
+      discountedPrice: product.sizePrices?.[0]?.discountedPrice ?? "",
+      discount: product.sizePrices?.[0]?.discountPercent ?? null,
       quantity: product.quantity,
       description: product.description ?? "",
       additionalInformation: product.additionalInformation ?? "",
       seoMetaTitle: product.seoMetaTitle ?? "",
       seoMetaDescription: product.seoMetaDescription ?? "",
       seoSlug: product.seoSlug ?? "",
-      images: product.images ?? [],
+      images: (product.sizePrices ?? []).flatMap((variant) => variant.images ?? []),
       sizes: product.sizes ?? [],
-      sizePrices: product.sizePrices ?? [],
+      sizePrices: (product.sizePrices ?? []).map((variant) => ({
+        ...variant,
+        discountPercent: getDiscountPercent(
+          variant.price ?? "",
+          variant.discountedPrice ?? "",
+        ),
+      })),
       inStock: product.inStock ?? true,
       brand: product.brand ?? "",
       format: product.format ?? "",
@@ -103,10 +115,11 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const name = text(formData, "name");
-  const price = text(formData, "price");
   const quantity = Number(text(formData, "quantity"));
   const category = text(formData, "category");
   const subcategory = text(formData, "subcategory");
+  const submittedSizePrices = sizePrices(formData);
+  const price = submittedSizePrices[0]?.price ?? "";
 
   if (!name || !price || !category || !subcategory || !Number.isFinite(quantity)) {
     return NextResponse.json(
@@ -122,15 +135,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const files = formData
-    .getAll("images")
-    .filter((value): value is File => value instanceof File && value.size > 0);
-
-  let images: string[] = [];
   let sizeImages: string[] = [];
 
   try {
-    images = await Promise.all(files.map((file) => uploadProductImage(file)));
     const variantFiles = formData
       .getAll("sizeImages")
       .filter((value): value is File => value instanceof File && value.size > 0);
@@ -150,15 +157,12 @@ export async function POST(request: Request) {
 
   const product = await Product.create({
     name,
-    price,
-    discountedPrice: text(formData, "discountedPrice"),
     quantity,
     description: text(formData, "description"),
     additionalInformation: text(formData, "additionalInformation"),
     seoMetaTitle: text(formData, "seoMetaTitle"),
     seoMetaDescription: text(formData, "seoMetaDescription"),
     seoSlug: text(formData, "seoSlug"),
-    images,
     sizes: formData
       .getAll("sizes")
       .filter((value): value is string => typeof value === "string")
@@ -192,10 +196,11 @@ export async function PATCH(request: Request) {
   const formData = await request.formData();
   const id = text(formData, "id");
   const name = text(formData, "name");
-  const price = text(formData, "price");
   const quantity = Number(text(formData, "quantity"));
   const category = text(formData, "category");
   const subcategory = text(formData, "subcategory");
+  const submittedSizePrices = sizePrices(formData);
+  const price = submittedSizePrices[0]?.price ?? "";
 
   if (!mongoose.isValidObjectId(id)) {
     return NextResponse.json(
@@ -218,21 +223,9 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const existingImages = formData
-    .getAll("existingImages")
-    .filter((value): value is string => typeof value === "string")
-    .map((value) => value.trim())
-    .filter((value) => value.startsWith("https://res.cloudinary.com/"));
-
-  const files = formData
-    .getAll("images")
-    .filter((value): value is File => value instanceof File && value.size > 0);
-
-  let uploadedImages: string[] = [];
   let uploadedSizeImages: string[] = [];
 
   try {
-    uploadedImages = await Promise.all(files.map((file) => uploadProductImage(file)));
     const variantFiles = formData
       .getAll("sizeImages")
       .filter((value): value is File => value instanceof File && value.size > 0);
@@ -257,15 +250,12 @@ export async function PATCH(request: Request) {
   }
 
   product.name = name;
-  product.price = price;
-  product.discountedPrice = text(formData, "discountedPrice");
   product.quantity = quantity;
   product.description = text(formData, "description");
   product.additionalInformation = text(formData, "additionalInformation");
   product.seoMetaTitle = text(formData, "seoMetaTitle");
   product.seoMetaDescription = text(formData, "seoMetaDescription");
   product.seoSlug = text(formData, "seoSlug");
-  product.images = [...existingImages, ...uploadedImages];
   product.sizes = formData
     .getAll("sizes")
     .filter((value): value is string => typeof value === "string")
@@ -283,6 +273,10 @@ export async function PATCH(request: Request) {
   product.isOffer = flag(formData, "isOffer");
 
   await product.save();
+  await Product.updateOne(
+    { _id: product._id },
+    { $unset: { price: 1, discountedPrice: 1, discount: 1 } },
+  );
 
   return NextResponse.json({ id: product._id.toString() });
 }
