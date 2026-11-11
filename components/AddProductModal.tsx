@@ -17,9 +17,14 @@ export type ProductFormValues = {
   seoMetaTitle?: string;
   seoMetaDescription?: string;
   seoSlug?: string;
-  imageNames?: string[];
   sizes?: string[];
-  sizePrices?: { size: string; price: string; discountedPrice?: string; images?: string[] }[];
+  sizePrices?: {
+    size: string;
+    price: string;
+    discountedPrice?: string;
+    discountPercent?: number | null;
+    images?: string[];
+  }[];
   inStock?: boolean;
   brand?: string;
   format?: string;
@@ -29,13 +34,6 @@ export type ProductFormValues = {
   subcategory?: string;
   isNewArrival?: boolean;
   isOffer?: boolean;
-};
-
-type ProductImageItem = {
-  id: string;
-  name: string;
-  file?: File;
-  previewUrl?: string;
 };
 
 type AddProductModalProps = {
@@ -68,12 +66,6 @@ function getDiscountPercent(price: string, discountedPrice: string) {
   return Math.round(((original - sale) / original) * 100);
 }
 
-function releaseImages(images: ProductImageItem[]) {
-  images.forEach((image) => {
-    if (image.previewUrl?.startsWith("blob:")) URL.revokeObjectURL(image.previewUrl);
-  });
-}
-
 export function AddProductModal({
   open,
   onClose,
@@ -88,14 +80,18 @@ export function AddProductModal({
   const [seoMetaTitle, setSeoMetaTitle] = useState("");
   const [seoMetaDescription, setSeoMetaDescription] = useState("");
   const [seoSlug, setSeoSlug] = useState("");
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const [images, setImages] = useState<ProductImageItem[]>([]);
   const [sizeInput, setSizeInput] = useState("");
   const [sizePriceInput, setSizePriceInput] = useState("");
   const [sizeDiscountPriceInput, setSizeDiscountPriceInput] = useState("");
   const [sizes, setSizes] = useState<string[]>([]);
   const [sizePrices, setSizePrices] = useState<
-    { size: string; price: string; discountedPrice?: string; images: string[] }[]
+    {
+      size: string;
+      price: string;
+      discountedPrice?: string;
+      discountPercent?: number | null;
+      images: string[];
+    }[]
   >([]);
   const [sizeImageFiles, setSizeImageFiles] = useState<Record<string, File[]>>({});
   const sizeImageInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -125,10 +121,6 @@ export function AddProductModal({
     setSeoMetaTitle("");
     setSeoMetaDescription("");
     setSeoSlug("");
-    setImages((current) => {
-      releaseImages(current);
-      return [];
-    });
     setSizeInput("");
     setSizePriceInput("");
     setSizeDiscountPriceInput("");
@@ -160,14 +152,6 @@ export function AddProductModal({
       setSeoMetaTitle(initialValues.seoMetaTitle ?? "");
       setSeoMetaDescription(initialValues.seoMetaDescription ?? "");
       setSeoSlug(initialValues.seoSlug ?? "");
-      setImages((current) => {
-        releaseImages(current);
-        return (initialValues.imageNames ?? []).slice(0, 1).map((name) => ({
-          id: name,
-          name,
-          previewUrl: name.startsWith("http") ? name : undefined,
-        }));
-      });
       setSizeInput("");
       setSizePriceInput("");
       setSizeDiscountPriceInput("");
@@ -210,35 +194,6 @@ export function AddProductModal({
   const handleCategoryChange = (value: string) => {
     setCategory(value);
     setSubcategory("");
-  };
-
-  const addImages = (fileList: FileList | null) => {
-    if (!fileList?.length) return;
-
-    const file = fileList[0];
-    const next = {
-      id: `${file.name}-${file.lastModified}-${file.size}-${crypto.randomUUID()}`,
-      name: file.name,
-      file,
-      previewUrl: URL.createObjectURL(file),
-    };
-
-    setImages((current) => {
-      releaseImages(current);
-      return [next];
-    });
-
-    if (imageInputRef.current) {
-      imageInputRef.current.value = "";
-    }
-  };
-
-  const removeImage = (id: string) => {
-    setImages((current) => {
-      const image = current.find((item) => item.id === id);
-      if (image) releaseImages([image]);
-      return current.filter((item) => item.id !== id);
-    });
   };
 
   const addSize = () => {
@@ -296,9 +251,7 @@ export function AddProductModal({
       formData.set("id", initialValues?.id ?? "");
     }
     formData.set("name", name);
-    formData.set("price", sizePrices[0]?.price ?? price);
     const calculatedSizePrices = sizePrices;
-    formData.set("discountedPrice", calculatedSizePrices[0]?.discountedPrice ?? "");
     formData.set("quantity", quantity);
     formData.set("description", description);
     formData.set("additionalInformation", additionalInformation);
@@ -322,14 +275,6 @@ export function AddProductModal({
         formData.append("sizeImageSizes", variant.size);
       });
     });
-    images.forEach((image) => {
-      if (image.file) {
-        formData.append("images", image.file);
-      } else if (image.previewUrl?.startsWith("http")) {
-        formData.append("existingImages", image.previewUrl);
-      }
-    });
-
     try {
       const response = await fetch("/api/products", {
         method: mode === "update" ? "PATCH" : "POST",
@@ -463,65 +408,6 @@ export function AddProductModal({
                 placeholder="For example: Suitable for sensitive skin. Use every morning."
               />
             </label>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <span className="text-[12px] font-medium tracking-wide text-foreground/70">
-              Product images
-            </span>
-            <input
-              ref={imageInputRef}
-              type="file"
-              name="images"
-              accept="image/*"
-              onChange={(event) => addImages(event.target.files)}
-              className="sr-only"
-            />
-            <div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => imageInputRef.current?.click()}
-              >
-                Add images
-              </Button>
-            </div>
-            {images.length > 0 ? (
-              <ul className="grid grid-cols-3 gap-3">
-                {images.map((image) => (
-                  <li key={image.id} className="relative">
-                    <input type="hidden" name="imageNames" value={image.name} />
-                    <div className="relative aspect-square overflow-hidden rounded-xl border border-primary bg-white">
-                      {image.previewUrl ? (
-                        // Blob previews are created in the browser and are not known to the image optimizer.
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={image.previewUrl}
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span className="flex h-full items-center px-2 text-center text-[11px] text-foreground/55">
-                          {image.name}
-                        </span>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeImage(image.id)}
-                      aria-label={`Remove ${image.name}`}
-                      className="absolute top-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-foreground/60 shadow-sm transition-colors hover:text-foreground"
-                    >
-                      <HiOutlineXMark className="h-3.5 w-3.5" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-[12px] text-foreground/55">
-                Add one or more images for this product.
-              </p>
-            )}
           </div>
 
           <div className="flex flex-col gap-2">
