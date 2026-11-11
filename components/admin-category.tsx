@@ -49,8 +49,13 @@ export const mainCategories: MainCategory[] = [
           },
           { value: "facial-wipes", label: "Facial Wipes / Kit", param: "type" },
           {
-            value: "serums-oils-moisturizer",
-            label: "Serums / Oils / Moisturizer",
+            value: "serum-oils",
+            label: "Serum / Oils",
+            param: "type",
+          },
+          {
+            value: "moisturizers",
+            label: "Moisturizers",
             param: "type",
           },
           { value: "spot-remover", label: "Spot Remover", param: "type" },
