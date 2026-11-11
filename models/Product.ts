@@ -27,6 +27,10 @@ const productSchema = new Schema(
     discount: { type: Number, default: null },
     quantity: { type: Number, required: true, min: 0 },
     description: { type: String, default: "", trim: true },
+    additionalInformation: { type: String, default: "", trim: true },
+    seoMetaTitle: { type: String, default: "", trim: true, maxlength: 60 },
+    seoMetaDescription: { type: String, default: "", trim: true, maxlength: 160 },
+    seoSlug: { type: String, default: "", trim: true, lowercase: true },
     images: { type: [String], default: [] },
     sizes: { type: [String], default: [] },
     sizePrices: {
