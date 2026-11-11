@@ -11,11 +11,12 @@ export type ProductFormValues = {
   name?: string;
   price?: string;
   discountedPrice?: string;
+  discountPercent?: string;
   quantity?: string;
   description?: string;
   imageNames?: string[];
   sizes?: string[];
-  sizePrices?: { size: string; price: string; images?: string[] }[];
+  sizePrices?: { size: string; price: string; discountedPrice?: string; images?: string[] }[];
   inStock?: boolean;
   brand?: string;
   format?: string;
@@ -55,15 +56,13 @@ function parseMoney(value: string) {
   return Number.isFinite(amount) ? amount : null;
 }
 
-function getDiscountPercent(price: string, discountedPrice: string) {
+function getDiscountedPrice(price: string, percent: string) {
   const original = parseMoney(price);
-  const sale = parseMoney(discountedPrice);
-
-  if (original === null || sale === null || original <= 0 || sale >= original) {
+  const discount = Number(percent);
+  if (original === null || !Number.isFinite(discount) || discount <= 0 || discount > 100) {
     return null;
   }
-
-  return Math.round(((original - sale) / original) * 100);
+  return (original * (1 - discount / 100)).toFixed(2);
 }
 
 function releaseImages(images: ProductImageItem[]) {
@@ -80,7 +79,7 @@ export function AddProductModal({
 }: AddProductModalProps) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
-  const [discountedPrice, setDiscountedPrice] = useState("");
+  const [discountPercent, setDiscountPercent] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [description, setDescription] = useState("");
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -89,7 +88,7 @@ export function AddProductModal({
   const [sizePriceInput, setSizePriceInput] = useState("");
   const [sizes, setSizes] = useState<string[]>([]);
   const [sizePrices, setSizePrices] = useState<
-    { size: string; price: string; images: string[] }[]
+    { size: string; price: string; discountedPrice?: string; images: string[] }[]
   >([]);
   const [sizeImageFiles, setSizeImageFiles] = useState<Record<string, File[]>>({});
   const sizeImageInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -110,15 +109,10 @@ export function AddProductModal({
     [category],
   );
 
-  const discountPercent = useMemo(
-    () => getDiscountPercent(sizePrices[0]?.price ?? price, discountedPrice),
-    [price, discountedPrice, sizePrices],
-  );
-
   const resetForm = () => {
     setName("");
     setPrice("");
-    setDiscountedPrice("");
+    setDiscountPercent("");
     setQuantity("1");
     setDescription("");
     setImages((current) => {
@@ -149,7 +143,7 @@ export function AddProductModal({
     if (initialValues) {
       setName(initialValues.name ?? "");
       setPrice(initialValues.price ?? "");
-      setDiscountedPrice(initialValues.discountedPrice ?? "");
+      setDiscountPercent(initialValues.discountPercent ?? "");
       setQuantity(initialValues.quantity ?? "1");
       setDescription(initialValues.description ?? "");
       setImages((current) => {
@@ -239,7 +233,10 @@ export function AddProductModal({
 
     if (sizes.some((item) => item.toLowerCase() === next.toLowerCase())) return;
     setSizes((current) => [...current, next]);
-    setSizePrices((current) => [...current, { size: next, price: nextPrice, images: [] }]);
+    setSizePrices((current) => [
+      ...current,
+      { size: next, price: nextPrice, discountedPrice: getDiscountedPrice(nextPrice, discountPercent) ?? undefined, images: [] },
+    ]);
     setSizeInput("");
     setSizePriceInput("");
   };
@@ -283,7 +280,12 @@ export function AddProductModal({
     }
     formData.set("name", name);
     formData.set("price", sizePrices[0]?.price ?? price);
-    formData.set("discountedPrice", discountedPrice);
+    const calculatedSizePrices = sizePrices.map((variant) => ({
+      ...variant,
+      discountedPrice: getDiscountedPrice(variant.price, discountPercent) ?? "",
+    }));
+    formData.set("discountedPrice", calculatedSizePrices[0]?.discountedPrice ?? "");
+    formData.set("discountPercent", discountPercent);
     formData.set("quantity", quantity);
     formData.set("description", description);
     formData.set("inStock", String(inStock));
@@ -296,8 +298,8 @@ export function AddProductModal({
     formData.set("isNewArrival", String(isNewArrival));
     formData.set("isOffer", String(isOffer));
     sizes.forEach((size) => formData.append("sizes", size));
-    formData.set("sizePrices", JSON.stringify(sizePrices));
-    sizePrices.forEach((variant) => {
+    formData.set("sizePrices", JSON.stringify(calculatedSizePrices));
+    calculatedSizePrices.forEach((variant) => {
       (sizeImageFiles[variant.size] ?? []).forEach((file) => {
         formData.append("sizeImages", file);
         formData.append("sizeImageSizes", variant.size);
@@ -392,27 +394,28 @@ export function AddProductModal({
           <div className="rounded-xl border border-primary bg-white p-4">
             <label className="flex flex-col gap-2">
               <span className="text-[12px] font-medium tracking-wide text-foreground/70">
-                Discounted price
+                Discount percent
               </span>
               <p className="text-[12px] leading-relaxed text-foreground/55">
-                Optional. Leave empty if the product has no discount.
+                Enter the discount percentage. Prices for every size are calculated automatically.
               </p>
               <input
-                type="text"
-                name="discountedPrice"
-                value={discountedPrice}
-                onChange={(event) => setDiscountedPrice(event.target.value)}
+                name="discountPercent"
+                type="number"
+                min={0}
+                max={100}
+                step="0.01"
+                value={discountPercent}
+                onChange={(event) => setDiscountPercent(event.target.value)}
                 className={inputClassName}
-                placeholder="$16"
+                placeholder="10"
               />
             </label>
-            {discountPercent !== null ? (
-              <p className="mt-3 text-[13px] font-medium text-accent">
-                {discountPercent}% off
-              </p>
-            ) : discountedPrice.trim() ? (
+            {discountPercent && Number(discountPercent) >= 0 && Number(discountPercent) <= 100 ? (
+              <p className="mt-3 text-[13px] font-medium text-accent">{discountPercent}% off</p>
+            ) : discountPercent ? (
               <p className="mt-3 text-[12px] text-foreground/55">
-                Enter a discounted price lower than the original price.
+                Enter a percentage between 0 and 100.
               </p>
             ) : null}
           </div>
@@ -565,6 +568,11 @@ export function AddProductModal({
                       return (
                     <span className="inline-flex items-center gap-1 rounded-full border border-primary bg-white py-1 pr-1 pl-3 text-[13px] text-foreground">
                       {size} · {variant?.price}
+                      {variant?.price && getDiscountedPrice(variant.price, discountPercent) ? (
+                        <span className="text-accent">
+                          → {getDiscountedPrice(variant.price, discountPercent)}
+                        </span>
+                      ) : null}
                       <input
                         ref={(element) => {
                           sizeImageInputRefs.current[size] = element;

@@ -24,7 +24,7 @@ type SavedProduct = {
   description: string;
   images: string[];
   sizes: string[];
-  sizePrices: { size: string; price: string; images?: string[] }[];
+  sizePrices: { size: string; price: string; discountedPrice?: string; images?: string[] }[];
   inStock: boolean;
   brand: string;
   format: string;
@@ -66,6 +66,7 @@ function toFormValues(product: AdminProduct): ProductFormValues {
     name: product.name,
     price: product.price,
     discountedPrice: product.discountedPrice,
+    discountPercent: product.discount !== null ? String(product.discount) : "",
     quantity: String(product.quantity),
     description: product.description,
     imageNames: product.images,

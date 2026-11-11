@@ -30,7 +30,7 @@ const productSchema = new Schema(
     images: { type: [String], default: [] },
     sizes: { type: [String], default: [] },
     sizePrices: {
-      type: [{ size: String, price: String, images: { type: [String], default: [] } }],
+      type: [{ size: String, price: String, discountedPrice: String, images: { type: [String], default: [] } }],
       default: [],
     },
     inStock: { type: Boolean, default: true },
