@@ -77,7 +77,10 @@ export async function GET() {
       discount: product.sizePrices?.[0]?.discountPercent ?? null,
       quantity: product.quantity,
       description: product.description ?? "",
-      additionalInformation: product.additionalInformation ?? "",
+      keyBenefits: product.keyBenefits ?? "",
+      keyIngredients: product.keyIngredients ?? "",
+      howToUse: product.howToUse ?? "",
+      perfectFor: product.perfectFor ?? "",
       seoMetaTitle: product.seoMetaTitle ?? "",
       seoMetaDescription: product.seoMetaDescription ?? "",
       seoSlug: product.seoSlug ?? "",
@@ -159,7 +162,10 @@ export async function POST(request: Request) {
     name,
     quantity,
     description: text(formData, "description"),
-    additionalInformation: text(formData, "additionalInformation"),
+    keyBenefits: text(formData, "keyBenefits"),
+    keyIngredients: text(formData, "keyIngredients"),
+    howToUse: text(formData, "howToUse"),
+    perfectFor: text(formData, "perfectFor"),
     seoMetaTitle: text(formData, "seoMetaTitle"),
     seoMetaDescription: text(formData, "seoMetaDescription"),
     seoSlug: text(formData, "seoSlug"),
@@ -252,7 +258,10 @@ export async function PATCH(request: Request) {
   product.name = name;
   product.quantity = quantity;
   product.description = text(formData, "description");
-  product.additionalInformation = text(formData, "additionalInformation");
+  product.keyBenefits = text(formData, "keyBenefits");
+  product.keyIngredients = text(formData, "keyIngredients");
+  product.howToUse = text(formData, "howToUse");
+  product.perfectFor = text(formData, "perfectFor");
   product.seoMetaTitle = text(formData, "seoMetaTitle");
   product.seoMetaDescription = text(formData, "seoMetaDescription");
   product.seoSlug = text(formData, "seoSlug");
@@ -275,7 +284,14 @@ export async function PATCH(request: Request) {
   await product.save();
   await Product.updateOne(
     { _id: product._id },
-    { $unset: { price: 1, discountedPrice: 1, discount: 1 } },
+    {
+      $unset: {
+        price: 1,
+        discountedPrice: 1,
+        discount: 1,
+        additionalInformation: 1,
+      },
+    },
   );
 
   return NextResponse.json({ id: product._id.toString() });

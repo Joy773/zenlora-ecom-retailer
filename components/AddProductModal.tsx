@@ -13,7 +13,10 @@ export type ProductFormValues = {
   discountedPrice?: string;
   quantity?: string;
   description?: string;
-  additionalInformation?: string;
+  keyBenefits?: string;
+  keyIngredients?: string;
+  howToUse?: string;
+  perfectFor?: string;
   seoMetaTitle?: string;
   seoMetaDescription?: string;
   seoSlug?: string;
@@ -76,7 +79,10 @@ export function AddProductModal({
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [description, setDescription] = useState("");
-  const [additionalInformation, setAdditionalInformation] = useState("");
+  const [keyBenefits, setKeyBenefits] = useState("");
+  const [keyIngredients, setKeyIngredients] = useState("");
+  const [howToUse, setHowToUse] = useState("");
+  const [perfectFor, setPerfectFor] = useState("");
   const [seoMetaTitle, setSeoMetaTitle] = useState("");
   const [seoMetaDescription, setSeoMetaDescription] = useState("");
   const [seoSlug, setSeoSlug] = useState("");
@@ -117,7 +123,10 @@ export function AddProductModal({
     setPrice("");
     setQuantity("1");
     setDescription("");
-    setAdditionalInformation("");
+    setKeyBenefits("");
+    setKeyIngredients("");
+    setHowToUse("");
+    setPerfectFor("");
     setSeoMetaTitle("");
     setSeoMetaDescription("");
     setSeoSlug("");
@@ -148,7 +157,10 @@ export function AddProductModal({
       setPrice(initialValues.price ?? "");
       setQuantity(initialValues.quantity ?? "1");
       setDescription(initialValues.description ?? "");
-      setAdditionalInformation(initialValues.additionalInformation ?? "");
+      setKeyBenefits(initialValues.keyBenefits ?? "");
+      setKeyIngredients(initialValues.keyIngredients ?? "");
+      setHowToUse(initialValues.howToUse ?? "");
+      setPerfectFor(initialValues.perfectFor ?? "");
       setSeoMetaTitle(initialValues.seoMetaTitle ?? "");
       setSeoMetaDescription(initialValues.seoMetaDescription ?? "");
       setSeoSlug(initialValues.seoSlug ?? "");
@@ -254,7 +266,10 @@ export function AddProductModal({
     const calculatedSizePrices = sizePrices;
     formData.set("quantity", quantity);
     formData.set("description", description);
-    formData.set("additionalInformation", additionalInformation);
+    formData.set("keyBenefits", keyBenefits);
+    formData.set("keyIngredients", keyIngredients);
+    formData.set("howToUse", howToUse);
+    formData.set("perfectFor", perfectFor);
     formData.set("seoMetaTitle", seoMetaTitle);
     formData.set("seoMetaDescription", seoMetaDescription);
     formData.set("seoSlug", seoSlug);
@@ -391,23 +406,51 @@ export function AddProductModal({
             </label>
           </div>
 
-          <div className="rounded-xl border border-primary bg-white p-4">
-            <label className="flex flex-col gap-2">
-              <span className="text-[12px] font-medium tracking-wide text-foreground/70">
-                Additional information
-              </span>
-              <p className="text-[12px] leading-relaxed text-foreground/55">
-                Add any extra product details customers may need to know.
-              </p>
-              <textarea
-                name="additionalInformation"
-                rows={4}
-                value={additionalInformation}
-                onChange={(event) => setAdditionalInformation(event.target.value)}
-                className={textareaClassName}
-                placeholder="For example: Suitable for sensitive skin. Use every morning."
-              />
-            </label>
+          <div className="flex flex-col gap-5">
+            {[
+              {
+                label: "Key benefits",
+                name: "keyBenefits",
+                value: keyBenefits,
+                setValue: setKeyBenefits,
+                placeholder: "For example: Hydrates skin and helps improve skin texture.",
+              },
+              {
+                label: "Key ingredients",
+                name: "keyIngredients",
+                value: keyIngredients,
+                setValue: setKeyIngredients,
+                placeholder: "For example: Hyaluronic acid, niacinamide, and vitamin E.",
+              },
+              {
+                label: "How to use",
+                name: "howToUse",
+                value: howToUse,
+                setValue: setHowToUse,
+                placeholder: "For example: Apply a small amount to clean skin every morning.",
+              },
+              {
+                label: "Perfect for",
+                name: "perfectFor",
+                value: perfectFor,
+                setValue: setPerfectFor,
+                placeholder: "For example: Daily routines and all skin types.",
+              },
+            ].map((field) => (
+              <label key={field.name} className="flex flex-col gap-2">
+                <span className="text-[12px] font-medium tracking-wide text-foreground/70">
+                  {field.label}
+                </span>
+                <textarea
+                  name={field.name}
+                  rows={3}
+                  value={field.value}
+                  onChange={(event) => field.setValue(event.target.value)}
+                  className={textareaClassName}
+                  placeholder={field.placeholder}
+                />
+              </label>
+            ))}
           </div>
 
           <div className="flex flex-col gap-2">

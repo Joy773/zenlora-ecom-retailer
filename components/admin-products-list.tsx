@@ -22,7 +22,10 @@ type SavedProduct = {
   discount: number | null;
   quantity: number;
   description: string;
-  additionalInformation: string;
+  keyBenefits: string;
+  keyIngredients: string;
+  howToUse: string;
+  perfectFor: string;
   seoMetaTitle: string;
   seoMetaDescription: string;
   seoSlug: string;
@@ -78,7 +81,10 @@ function toFormValues(product: AdminProduct): ProductFormValues {
     discountedPrice: product.discountedPrice,
     quantity: String(product.quantity),
     description: product.description,
-    additionalInformation: product.additionalInformation,
+    keyBenefits: product.keyBenefits,
+    keyIngredients: product.keyIngredients,
+    howToUse: product.howToUse,
+    perfectFor: product.perfectFor,
     seoMetaTitle: product.seoMetaTitle,
     seoMetaDescription: product.seoMetaDescription,
     seoSlug: product.seoSlug,
