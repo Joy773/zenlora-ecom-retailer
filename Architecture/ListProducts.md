@@ -42,7 +42,7 @@ These files already exist. The list is wired into them. They are not rewritten f
 | `components/admin-products-list.tsx` | Replaces the sample cards with the products returned by the API. Each card keeps its current layout. |
 | `components/AddProductModal.tsx` | Stays on the page for Add and Update. |
 | `components/common/button.tsx` | Active, Disable, Update, and Delete stay on each card. |
-| `components/admin-category.tsx` | Supplies the labels for values such as `skincare` and `type:serums-oils-moisturizer`. |
+| `components/admin-category.tsx` | Supplies the labels for values such as `skincare` and `type:serum-oils`. |
 | `components/admin-searchbar.tsx` | Stays above the list. |
 | `app/api/products/route.ts` | Already saves a product with `POST`. A `GET` handler is added beside it to read the products. |
 | `models/Product.ts` | The same product shape. `Product.find()` reads every saved product. |
@@ -63,7 +63,7 @@ The list reads these fields from each saved product:
 | `isNewArrival` | New Arrival badge |
 | `isOffer` | Offer badge |
 | `category` | Main category label, such as Skincare |
-| `subcategory` | Subcategory label, such as Serums / Oils / Moisturizer |
+| `subcategory` | Subcategory label, such as Serum / Oils or Moisturizers |
 | `description` | Short description under the category |
 | `price` | Original price |
 | `discountedPrice` | Sale price, when one was saved |
