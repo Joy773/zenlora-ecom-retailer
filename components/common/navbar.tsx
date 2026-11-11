@@ -44,8 +44,12 @@ const skincareMenu: NonNullable<NavLink["children"]> = [
       },
       { href: "/shop?category=skincare&type=facial-wipes", label: "Facial Wipes / Kit" },
       {
-        href: "/shop?category=skincare&type=serums-oils-moisturizer",
-        label: "Serums / Oils / Moisturizer",
+        href: "/shop?category=skincare&type=serum-oils",
+        label: "Serum / Oils",
+      },
+      {
+        href: "/shop?category=skincare&type=moisturizers",
+        label: "Moisturizers",
       },
       { href: "/shop?category=skincare&type=spot-remover", label: "Spot Remover" },
       { href: "/shop?category=skincare&type=lip-care", label: "Lip Balms / Lip Care" },
