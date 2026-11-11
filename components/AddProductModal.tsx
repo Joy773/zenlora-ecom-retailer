@@ -11,9 +11,12 @@ export type ProductFormValues = {
   name?: string;
   price?: string;
   discountedPrice?: string;
-  discountPercent?: string;
   quantity?: string;
   description?: string;
+  additionalInformation?: string;
+  seoMetaTitle?: string;
+  seoMetaDescription?: string;
+  seoSlug?: string;
   imageNames?: string[];
   sizes?: string[];
   sizePrices?: { size: string; price: string; discountedPrice?: string; images?: string[] }[];
@@ -56,13 +59,13 @@ function parseMoney(value: string) {
   return Number.isFinite(amount) ? amount : null;
 }
 
-function getDiscountedPrice(price: string, percent: string) {
+function getDiscountPercent(price: string, discountedPrice: string) {
   const original = parseMoney(price);
-  const discount = Number(percent);
-  if (original === null || !Number.isFinite(discount) || discount <= 0 || discount > 100) {
+  const sale = parseMoney(discountedPrice);
+  if (original === null || sale === null || original <= 0 || sale >= original) {
     return null;
   }
-  return (original * (1 - discount / 100)).toFixed(2);
+  return Math.round(((original - sale) / original) * 100);
 }
 
 function releaseImages(images: ProductImageItem[]) {
@@ -79,13 +82,17 @@ export function AddProductModal({
 }: AddProductModalProps) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
-  const [discountPercent, setDiscountPercent] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [description, setDescription] = useState("");
+  const [additionalInformation, setAdditionalInformation] = useState("");
+  const [seoMetaTitle, setSeoMetaTitle] = useState("");
+  const [seoMetaDescription, setSeoMetaDescription] = useState("");
+  const [seoSlug, setSeoSlug] = useState("");
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<ProductImageItem[]>([]);
   const [sizeInput, setSizeInput] = useState("");
   const [sizePriceInput, setSizePriceInput] = useState("");
+  const [sizeDiscountPriceInput, setSizeDiscountPriceInput] = useState("");
   const [sizes, setSizes] = useState<string[]>([]);
   const [sizePrices, setSizePrices] = useState<
     { size: string; price: string; discountedPrice?: string; images: string[] }[]
@@ -112,15 +119,19 @@ export function AddProductModal({
   const resetForm = () => {
     setName("");
     setPrice("");
-    setDiscountPercent("");
     setQuantity("1");
     setDescription("");
+    setAdditionalInformation("");
+    setSeoMetaTitle("");
+    setSeoMetaDescription("");
+    setSeoSlug("");
     setImages((current) => {
       releaseImages(current);
       return [];
     });
     setSizeInput("");
     setSizePriceInput("");
+    setSizeDiscountPriceInput("");
     setSizes([]);
     setSizePrices([]);
     setSizeImageFiles({});
@@ -143,9 +154,12 @@ export function AddProductModal({
     if (initialValues) {
       setName(initialValues.name ?? "");
       setPrice(initialValues.price ?? "");
-      setDiscountPercent(initialValues.discountPercent ?? "");
       setQuantity(initialValues.quantity ?? "1");
       setDescription(initialValues.description ?? "");
+      setAdditionalInformation(initialValues.additionalInformation ?? "");
+      setSeoMetaTitle(initialValues.seoMetaTitle ?? "");
+      setSeoMetaDescription(initialValues.seoMetaDescription ?? "");
+      setSeoSlug(initialValues.seoSlug ?? "");
       setImages((current) => {
         releaseImages(current);
         return (initialValues.imageNames ?? []).slice(0, 1).map((name) => ({
@@ -156,6 +170,7 @@ export function AddProductModal({
       });
       setSizeInput("");
       setSizePriceInput("");
+      setSizeDiscountPriceInput("");
       setSizes(initialValues.sizes ?? []);
       setSizePrices(
         (initialValues.sizePrices ?? []).map((variant) => ({
@@ -229,16 +244,18 @@ export function AddProductModal({
   const addSize = () => {
     const next = sizeInput.trim();
     const nextPrice = sizePriceInput.trim();
+    const nextDiscountPrice = sizeDiscountPriceInput.trim();
     if (!next || !nextPrice) return;
 
     if (sizes.some((item) => item.toLowerCase() === next.toLowerCase())) return;
     setSizes((current) => [...current, next]);
     setSizePrices((current) => [
       ...current,
-      { size: next, price: nextPrice, discountedPrice: getDiscountedPrice(nextPrice, discountPercent) ?? undefined, images: [] },
+      { size: next, price: nextPrice, discountedPrice: nextDiscountPrice || undefined, images: [] },
     ]);
     setSizeInput("");
     setSizePriceInput("");
+    setSizeDiscountPriceInput("");
   };
 
   const removeSize = (size: string) => {
@@ -280,14 +297,14 @@ export function AddProductModal({
     }
     formData.set("name", name);
     formData.set("price", sizePrices[0]?.price ?? price);
-    const calculatedSizePrices = sizePrices.map((variant) => ({
-      ...variant,
-      discountedPrice: getDiscountedPrice(variant.price, discountPercent) ?? "",
-    }));
+    const calculatedSizePrices = sizePrices;
     formData.set("discountedPrice", calculatedSizePrices[0]?.discountedPrice ?? "");
-    formData.set("discountPercent", discountPercent);
     formData.set("quantity", quantity);
     formData.set("description", description);
+    formData.set("additionalInformation", additionalInformation);
+    formData.set("seoMetaTitle", seoMetaTitle);
+    formData.set("seoMetaDescription", seoMetaDescription);
+    formData.set("seoSlug", seoSlug);
     formData.set("inStock", String(inStock));
     formData.set("brand", brand);
     formData.set("format", format);
@@ -394,35 +411,6 @@ export function AddProductModal({
           <div className="rounded-xl border border-primary bg-white p-4">
             <label className="flex flex-col gap-2">
               <span className="text-[12px] font-medium tracking-wide text-foreground/70">
-                Discount percent
-              </span>
-              <p className="text-[12px] leading-relaxed text-foreground/55">
-                Enter the discount percentage. Prices for every size are calculated automatically.
-              </p>
-              <input
-                name="discountPercent"
-                type="number"
-                min={0}
-                max={100}
-                step="0.01"
-                value={discountPercent}
-                onChange={(event) => setDiscountPercent(event.target.value)}
-                className={inputClassName}
-                placeholder="10"
-              />
-            </label>
-            {discountPercent && Number(discountPercent) >= 0 && Number(discountPercent) <= 100 ? (
-              <p className="mt-3 text-[13px] font-medium text-accent">{discountPercent}% off</p>
-            ) : discountPercent ? (
-              <p className="mt-3 text-[12px] text-foreground/55">
-                Enter a percentage between 0 and 100.
-              </p>
-            ) : null}
-          </div>
-
-          <div className="rounded-xl border border-primary bg-white p-4">
-            <label className="flex flex-col gap-2">
-              <span className="text-[12px] font-medium tracking-wide text-foreground/70">
                 Quantity
               </span>
               <p className="text-[12px] leading-relaxed text-foreground/55">
@@ -454,6 +442,25 @@ export function AddProductModal({
                 onChange={(event) => setDescription(event.target.value)}
                 className="rounded-xl border border-primary bg-white px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-foreground/35 focus:border-accent"
                 placeholder="A thoughtfully chosen essential for calm, balanced routines."
+              />
+            </label>
+          </div>
+
+          <div className="rounded-xl border border-primary bg-white p-4">
+            <label className="flex flex-col gap-2">
+              <span className="text-[12px] font-medium tracking-wide text-foreground/70">
+                Additional information
+              </span>
+              <p className="text-[12px] leading-relaxed text-foreground/55">
+                Add any extra product details customers may need to know.
+              </p>
+              <textarea
+                name="additionalInformation"
+                rows={4}
+                value={additionalInformation}
+                onChange={(event) => setAdditionalInformation(event.target.value)}
+                className={textareaClassName}
+                placeholder="For example: Suitable for sensitive skin. Use every morning."
               />
             </label>
           </div>
@@ -522,20 +529,36 @@ export function AddProductModal({
               Sizes
             </span>
             <div className="flex gap-2">
-              <input
-                type="text"
-                value={sizeInput}
-                onChange={(event) => setSizeInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    addSize();
-                  }
-                }}
-                className={inputClassName}
-                placeholder="50 ML"
-                aria-label="Size"
-              />
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <input
+                  type="text"
+                  value={sizeInput}
+                  onChange={(event) => setSizeInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      addSize();
+                    }
+                  }}
+                  className={inputClassName}
+                  placeholder="50 ML"
+                  aria-label="Size"
+                />
+                <input
+                  type="text"
+                  value={sizeDiscountPriceInput}
+                  onChange={(event) => setSizeDiscountPriceInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      addSize();
+                    }
+                  }}
+                  className={inputClassName}
+                  placeholder="Discount price"
+                  aria-label="Discount price for size"
+                />
+              </div>
               <input
                 type="text"
                 value={sizePriceInput}
@@ -546,11 +569,16 @@ export function AddProductModal({
                     addSize();
                   }
                 }}
-                className={`${inputClassName} w-28`}
+                className={`${inputClassName} w-28 self-start`}
                 placeholder="Price"
                 aria-label="Size price"
               />
-              <Button type="button" variant="outline" onClick={addSize}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addSize}
+                className="self-start"
+              >
                 Add
               </Button>
             </div>
@@ -568,9 +596,9 @@ export function AddProductModal({
                       return (
                     <span className="inline-flex items-center gap-1 rounded-full border border-primary bg-white py-1 pr-1 pl-3 text-[13px] text-foreground">
                       {size} · {variant?.price}
-                      {variant?.price && getDiscountedPrice(variant.price, discountPercent) ? (
+                      {variant?.discountedPrice ? (
                         <span className="text-accent">
-                          → {getDiscountedPrice(variant.price, discountPercent)}
+                          → {variant.discountedPrice} ({getDiscountPercent(variant.price, variant.discountedPrice) ?? "—"}% off)
                         </span>
                       ) : null}
                       <input
@@ -768,6 +796,50 @@ export function AddProductModal({
               </label>
             </div>
           </fieldset>
+
+          <label className="flex flex-col gap-2">
+            <span className="text-[12px] font-medium tracking-wide text-foreground/70">
+              SEO Meta Title
+            </span>
+            <input
+              type="text"
+              name="seoMetaTitle"
+              maxLength={60}
+              value={seoMetaTitle}
+              onChange={(event) => setSeoMetaTitle(event.target.value)}
+              className={inputClassName}
+              placeholder="Daily SPF 50 Lotion | Zenlora"
+            />
+          </label>
+
+          <label className="flex flex-col gap-2">
+            <span className="text-[12px] font-medium tracking-wide text-foreground/70">
+              SEO Meta Description
+            </span>
+            <textarea
+              name="seoMetaDescription"
+              rows={3}
+              maxLength={160}
+              value={seoMetaDescription}
+              onChange={(event) => setSeoMetaDescription(event.target.value)}
+              className={textareaClassName}
+              placeholder="A short description for search results."
+            />
+          </label>
+
+          <label className="flex flex-col gap-2">
+            <span className="text-[12px] font-medium tracking-wide text-foreground/70">
+              Product URL Slug
+            </span>
+            <input
+              type="text"
+              name="seoSlug"
+              value={seoSlug}
+              onChange={(event) => setSeoSlug(event.target.value)}
+              className={inputClassName}
+              placeholder="daily-spf-50-lotion"
+            />
+          </label>
 
           {formError ? (
             <p className="text-[13px] text-red-600" role="alert">
