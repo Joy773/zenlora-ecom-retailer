@@ -313,9 +313,9 @@ const newArrivalsMenu: NonNullable<NavLink["children"]> = [
   {
     title: "Categories",
     items: [
-      { href: "/makeup", label: "Makeup" },
-      { href: "/skincare", label: "Skincare" },
-      { href: "/haircare", label: "Haircare" },
+      { href: "/makeup?flag=new", label: "Makeup" },
+      { href: "/skincare?flag=new", label: "Skincare" },
+      { href: "/haircare?flag=new", label: "Haircare" },
     ],
   },
 ];
@@ -324,9 +324,9 @@ const offersMenu: NonNullable<NavLink["children"]> = [
   {
     title: "Categories",
     items: [
-      { href: "/makeup", label: "Makeup" },
-      { href: "/skincare", label: "Skincare" },
-      { href: "/haircare", label: "Haircare" },
+      { href: "/makeup?flag=offer", label: "Makeup" },
+      { href: "/skincare?flag=offer", label: "Skincare" },
+      { href: "/haircare?flag=offer", label: "Haircare" },
     ],
   },
 ];
