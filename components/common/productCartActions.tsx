@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { HiOutlineMinus, HiOutlinePlus } from "react-icons/hi2";
+import {
+  HiOutlineMinus,
+  HiOutlinePlus,
+  HiOutlineShoppingCart,
+} from "react-icons/hi2";
 import { toast } from "react-toastify";
 import type { CartProduct } from "@/context/cart-context";
 import { useCart } from "@/context/cart-context";
@@ -73,29 +77,22 @@ export function ProductDetailCartActions({ product }: { product: CartProduct }) 
   );
 }
 
-export function ProductCardAddToCart({ product }: { product: CartProduct }) {
+export function ProductCardAddToCartIcon({
+  product,
+}: {
+  product: CartProduct;
+}) {
   const { addItem } = useCart();
 
   return (
-    <AddToCartButton
+    <button
+      type="button"
+      aria-label={`Add ${product.name} to cart`}
+      title="Add to cart"
       onClick={() => addToCartWithToast(addItem, product)}
-    />
-  );
-}
-
-export function ProductCardCartActions({
-  product,
-  children,
-}: {
-  product: CartProduct;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2">
-      <div className="flex items-start justify-between gap-2">
-        {children}
-        <ProductCardAddToCart product={product} />
-      </div>
-    </div>
+      className="absolute top-3 right-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-foreground shadow-sm transition-colors hover:bg-accent hover:text-white"
+    >
+      <HiOutlineShoppingCart className="h-5 w-5" />
+    </button>
   );
 }
