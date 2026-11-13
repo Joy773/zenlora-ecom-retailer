@@ -373,6 +373,23 @@ export default function AdminCategory({
     params.delete("type");
     params.delete("concern");
 
+    const selectedCategory =
+      !nextCategory || nextCategory === "all" ? "" : nextCategory;
+    const selectedType =
+      subcategory?.param === "type" ? subcategory.value : "";
+    const selectedConcern =
+      subcategory?.param === "concern" ? subcategory.value : "";
+
+    window.dispatchEvent(
+      new CustomEvent("zenlora:admin-category-changed", {
+        detail: {
+          category: selectedCategory,
+          type: selectedType,
+          concern: selectedConcern,
+        },
+      }),
+    );
+
     if (!nextCategory || nextCategory === "all") {
       params.delete("category");
     } else {
