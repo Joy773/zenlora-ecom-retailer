@@ -5,19 +5,11 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import type { CartProduct } from "@/context/cart-context";
-import { ProductCardCartActions } from "./productCartActions";
+import type { StoreProduct } from "@/lib/store-products";
+import { ProductCardAddToCartIcon } from "./productCartActions";
 import Pagination from "./pagination";
 
-type Product = {
-  href: string;
-  name: string;
-  price: string;
-  image: string;
-  alt: string;
-  slug?: string;
-};
-
-function toCartProduct(product: Product): CartProduct {
+function toCartProduct(product: StoreProduct): CartProduct {
   return {
     slug: product.slug ?? product.href.replace(/^\/product\//, ""),
     name: product.name,
@@ -33,7 +25,7 @@ export default function CategoryProductGrid({
   pageSize,
   basePath,
 }: {
-  products: Product[];
+  products: StoreProduct[];
   pageSize: number;
   basePath: string;
 }) {
@@ -78,18 +70,33 @@ export default function CategoryProductGrid({
         {pageProducts.map((product) => (
           <li key={product.href} className="h-full">
             <div className="flex h-full flex-col">
-              <Link href={product.href} className="group block">
-                <div className="relative aspect-square overflow-hidden bg-[#f2f2f0]">
-                  <Image
-                    src={product.image}
-                    alt={product.alt}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="(max-width: 768px) 45vw, 33vw"
-                  />
-                </div>
-              </Link>
-              <ProductCardCartActions product={toCartProduct(product)}>
+              <div className="relative">
+                <Link href={product.href} className="group block">
+                  <div className="relative aspect-square overflow-hidden bg-[#f2f2f0]">
+                    {product.image ? (
+                      <Image
+                        src={product.image}
+                        alt={product.alt}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 768px) 45vw, 33vw"
+                      />
+                    ) : null}
+                    {product.discount !== null && product.discount > 0 ? (
+                      <span className="absolute top-2 left-2 flex h-12 w-12 flex-col items-center justify-center rounded-full bg-accent text-center font-bold text-white">
+                        <span className="text-[13px] leading-tight">{product.discount}%</span>
+                        <span className="text-[10px] leading-tight tracking-wide">OFF</span>
+                      </span>
+                    ) : product.isNewArrival ? (
+                      <span className="absolute top-2 left-2 rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold tracking-wide text-foreground uppercase">
+                        New Arrival
+                      </span>
+                    ) : null}
+                  </div>
+                </Link>
+                <ProductCardAddToCartIcon product={toCartProduct(product)} />
+              </div>
+              <div className="mt-3 min-h-0">
                 <Link href={product.href} className="min-w-0">
                   <p className="line-clamp-2 text-[12px] leading-snug text-foreground sm:text-[13px]">
                     {product.name}
@@ -97,8 +104,13 @@ export default function CategoryProductGrid({
                   <p className="mt-0.5 text-[12px] text-foreground sm:text-[13px]">
                     {product.price}
                   </p>
+                  {product.compareAtPrice ? (
+                    <p className="text-[11px] text-foreground/45 line-through sm:text-[12px]">
+                      {product.compareAtPrice}
+                    </p>
+                  ) : null}
                 </Link>
-              </ProductCardCartActions>
+              </div>
             </div>
           </li>
         ))}
