@@ -1,12 +1,18 @@
 "use client";
 
-import { MAKEUP_PAGE_SIZE, makeupProducts } from "./allProducts";
 import CategoryProductGrid from "./categoryProductGrid";
+import type { StoreProduct } from "@/lib/store-products";
 
-export default function MakeupProductGrid() {
+const MAKEUP_PAGE_SIZE = 9;
+
+export default function MakeupProductGrid({
+  products,
+}: {
+  products: StoreProduct[];
+}) {
   return (
     <CategoryProductGrid
-      products={makeupProducts}
+      products={products}
       pageSize={MAKEUP_PAGE_SIZE}
       basePath="/makeup"
     />
