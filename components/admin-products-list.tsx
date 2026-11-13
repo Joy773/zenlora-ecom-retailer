@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AddProductModal,
@@ -103,6 +104,19 @@ function toFormValues(product: AdminProduct): ProductFormValues {
 }
 
 export default function AdminProductsList() {
+  const searchParams = useSearchParams();
+  const [liveSearchQuery, setLiveSearchQuery] = useState(
+    () => searchParams.get("q") ?? "",
+  );
+  const [liveCategory, setLiveCategory] = useState(
+    () => searchParams.get("category") ?? "",
+  );
+  const [liveType, setLiveType] = useState(
+    () => searchParams.get("type") ?? "",
+  );
+  const [liveConcern, setLiveConcern] = useState(
+    () => searchParams.get("concern") ?? "",
+  );
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [open, setOpen] = useState(false);
@@ -140,11 +154,45 @@ export default function AdminProductsList() {
     const timer = window.setTimeout(() => {
       void loadProducts();
     }, 0);
+    const handleSearchChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<string>;
+      setLiveSearchQuery(
+        typeof customEvent.detail === "string" ? customEvent.detail : "",
+      );
+    };
+    const handleCategoryChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        category?: string;
+        type?: string;
+        concern?: string;
+      }>;
+      const detail = customEvent.detail ?? {};
+      setLiveCategory(detail.category ?? "");
+      setLiveType(detail.type ?? "");
+      setLiveConcern(detail.concern ?? "");
+    };
+
     window.addEventListener("zenlora:products-changed", loadProducts);
+    window.addEventListener(
+      "zenlora:admin-search-changed",
+      handleSearchChanged,
+    );
+    window.addEventListener(
+      "zenlora:admin-category-changed",
+      handleCategoryChanged,
+    );
 
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener("zenlora:products-changed", loadProducts);
+      window.removeEventListener(
+        "zenlora:admin-search-changed",
+        handleSearchChanged,
+      );
+      window.removeEventListener(
+        "zenlora:admin-category-changed",
+        handleCategoryChanged,
+      );
     };
   }, [loadProducts]);
 
@@ -152,6 +200,38 @@ export default function AdminProductsList() {
     () => (editingProduct ? toFormValues(editingProduct) : null),
     [editingProduct],
   );
+
+  const filteredProducts = useMemo(() => {
+    const query = liveSearchQuery.trim().toLowerCase();
+    const subcategory = liveType
+      ? `type:${liveType}`
+      : liveConcern
+        ? `concern:${liveConcern}`
+        : "";
+
+    return products.filter((product) => {
+      const matchesCategory =
+        !liveCategory || product.category === liveCategory;
+      const matchesSubcategory =
+        !subcategory || product.subcategory === subcategory;
+      const searchableText = [
+        product.name,
+        product.description,
+        product.brand,
+        product.categoryLabel,
+        product.subcategoryLabel,
+        product.seoSlug,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return (
+        matchesCategory &&
+        matchesSubcategory &&
+        (!query || searchableText.includes(query))
+      );
+    });
+  }, [products, liveSearchQuery, liveCategory, liveType, liveConcern]);
 
   const openUpdateModal = (product: AdminProduct) => {
     setEditingProduct(product);
@@ -210,9 +290,14 @@ export default function AdminProductsList() {
         {status === "ready" && products.length === 0 ? (
           <p className="p-5 text-[13px] text-foreground/60">No products yet.</p>
         ) : null}
-        {status === "ready" && products.length > 0 ? (
+        {status === "ready" && products.length > 0 && filteredProducts.length === 0 ? (
+          <p className="p-5 text-[13px] text-foreground/60">
+            No products match your search.
+          </p>
+        ) : null}
+        {status === "ready" && filteredProducts.length > 0 ? (
           <ul className="divide-y divide-foreground/10">
-            {products.map((product) => {
+            {filteredProducts.map((product) => {
               const salePrice = product.discountedPrice.trim();
 
               return (
