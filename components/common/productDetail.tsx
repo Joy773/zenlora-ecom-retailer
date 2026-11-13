@@ -14,9 +14,11 @@ import { useCart } from "@/context/cart-context";
 
 export type ProductDetailInfo = {
   description: string;
-  additional: { label: string; value: string }[];
   aboutBrand: string;
-  shipping: string;
+  howToUse: string;
+  keyBenefits: string;
+  keyIngredients: string;
+  perfectFor: string;
 };
 
 type ProductDetailProps = {
@@ -24,58 +26,58 @@ type ProductDetailProps = {
   compareAtPrice?: string;
   images: { src: string; alt: string }[];
   sizes: string[];
+  variants?: {
+    size: string;
+    price: string;
+    discountedPrice: string;
+  }[];
+  inStock?: boolean;
   info: ProductDetailInfo;
 };
 
-function DetailAccordion({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
+const detailTabs = [
+  { key: "description", label: "Description" },
+  { key: "aboutBrand", label: "About brand" },
+  { key: "howToUse", label: "How to use" },
+  { key: "keyBenefits", label: "Key Benefits" },
+  { key: "keyIngredients", label: "Key Ingredients" },
+  { key: "perfectFor", label: "Perfect For" },
+] as const;
 
-  return (
-    <div className="border-b border-foreground/10">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center justify-between py-4 text-left text-sm text-foreground"
-        aria-expanded={open}
-      >
-        {title}
-        <HiOutlineChevronDown
-          className={`h-4 w-4 text-foreground/50 transition-transform ${
-            open ? "rotate-180" : ""
-          }`}
-        />
-      </button>
-      {open ? (
-        <div className="pb-4 text-[13px] leading-relaxed text-foreground/70">
-          {children}
-        </div>
-      ) : null}
-    </div>
-  );
-}
+type DetailTabKey = (typeof detailTabs)[number]["key"];
 
 export default function ProductDetail({
   product,
   compareAtPrice,
   images,
   sizes,
+  variants = [],
+  inStock = true,
   info,
 }: ProductDetailProps) {
   const { addItem } = useCart();
   const [activeImage, setActiveImage] = useState(0);
   const [size, setSize] = useState(sizes[1] ?? sizes[0] ?? "");
   const [quantity, setQuantity] = useState(1);
+  const [activeTab, setActiveTab] = useState<DetailTabKey>("description");
 
+  const selectedVariant =
+    variants.find((variant) => variant.size === size) ?? variants[0];
+  const selectedPrice =
+    selectedVariant?.discountedPrice || selectedVariant?.price || product.price;
+  const selectedCompareAtPrice = selectedVariant?.discountedPrice
+    ? selectedVariant.price
+    : compareAtPrice;
   const selectedImage = images[activeImage] ?? images[0];
   const variantName = size ? `${product.name} ${size}` : product.name;
+  const activeText = info[activeTab] || "No information available.";
 
   const handleAddToCart = () => {
+    if (!inStock) {
+      toast.error("This product is currently out of stock.");
+      return;
+    }
+
     if (!size) {
       toast.error("Choose a size before adding this product to the cart.");
       return;
@@ -86,6 +88,7 @@ export default function ProductDetail({
     addItem(
       {
         ...product,
+        price: selectedPrice,
         slug: `${product.slug}-${sizeSlug}`,
         name: variantName,
       },
@@ -99,9 +102,9 @@ export default function ProductDetail({
   };
 
   return (
-    <section className="bg-white px-4 py-10 sm:px-8 sm:py-14 md:px-16 lg:px-20 lg:py-16">
-      <div className="mx-auto grid max-w-6xl items-start gap-10 md:grid-cols-2 md:gap-14 lg:gap-20">
-        <div>
+    <section className="bg-white px-8 py-10 sm:py-14 md:px-16 lg:px-20 lg:py-16">
+      <div className="grid w-full items-start gap-10 md:grid-cols-2 md:gap-14 lg:gap-20">
+        <div className="md:w-[92%]">
           <div className="relative aspect-square overflow-hidden bg-[#f6e7e2]">
             {selectedImage ? (
               <Image
@@ -149,12 +152,12 @@ export default function ProductDetail({
           </h1>
 
           <div className="mt-4 flex items-baseline gap-3">
-            {compareAtPrice ? (
+            {selectedCompareAtPrice ? (
               <p className="text-sm text-foreground/40 line-through">
-                {compareAtPrice}
+                {selectedCompareAtPrice}
               </p>
             ) : null}
-            <p className="text-xl font-semibold text-accent">{product.price}</p>
+            <p className="text-xl font-semibold text-accent">{selectedPrice}</p>
           </div>
 
           <div className="mt-6">
@@ -162,21 +165,24 @@ export default function ProductDetail({
               <label htmlFor="product-size" className="text-sm text-foreground/70">
                 size:
               </label>
-              <select
-                id="product-size"
-                value={size}
-                onChange={(event) => setSize(event.target.value)}
-                className="min-w-40 border border-foreground/15 bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-accent"
-              >
-                <option value="" disabled>
-                  Select size
-                </option>
-                {sizes.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
+              <div className="relative">
+                <select
+                  id="product-size"
+                  value={size}
+                  onChange={(event) => setSize(event.target.value)}
+                  className="min-w-40 appearance-none border border-foreground/15 bg-white px-3 py-2 pr-9 text-sm text-foreground outline-none focus:border-accent"
+                >
+                  <option value="" disabled>
+                    Select size
                   </option>
-                ))}
-              </select>
+                  {sizes.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <HiOutlineChevronDown className="pointer-events-none absolute top-1/2 right-2.5 h-4 w-4 -translate-y-1/2 text-foreground/60" />
+              </div>
               {size ? (
                 <button
                   type="button"
@@ -189,9 +195,13 @@ export default function ProductDetail({
             </div>
           </div>
 
-          <p className="mt-5 flex items-center gap-2 text-sm text-emerald-700">
-            <HiOutlineCheck className="h-4 w-4" />
-            In stock
+          <p
+            className={`mt-5 flex items-center gap-2 text-sm ${
+              inStock ? "text-emerald-700" : "text-red-600"
+            }`}
+          >
+            {inStock ? <HiOutlineCheck className="h-4 w-4" /> : null}
+            {inStock ? "In stock" : "Out of stock"}
           </p>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -216,35 +226,43 @@ export default function ProductDetail({
             </div>
             <button
               type="button"
+              disabled={!inStock}
               onClick={handleAddToCart}
-              className="h-11 rounded-full bg-accent px-6 text-xs font-semibold tracking-wide text-white uppercase transition-colors hover:bg-accent/90"
+              className="h-11 rounded-full bg-accent px-6 text-xs font-semibold tracking-wide text-white uppercase transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Add to cart
+              {inStock ? "Add to cart" : "Out of stock"}
             </button>
           </div>
 
           <div className="mt-8 border-t border-foreground/10">
-            <DetailAccordion title="Description">
-              <p>{info.description}</p>
-            </DetailAccordion>
-            <DetailAccordion title="Additional information">
-              <dl className="grid gap-2">
-                {info.additional.map((row) => (
-                  <div key={row.label} className="grid grid-cols-[8rem_1fr] gap-3">
-                    <dt className="text-foreground/50">{row.label}</dt>
-                    <dd>
-                      {row.label === "Size" ? size || "Select a size" : row.value}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </DetailAccordion>
-            <DetailAccordion title="About brand">
-              <p>{info.aboutBrand}</p>
-            </DetailAccordion>
-            <DetailAccordion title="Shipping & Delivery">
-              <p>{info.shipping}</p>
-            </DetailAccordion>
+            <div className="grid grid-cols-2 border-b border-foreground/10 sm:grid-cols-3 lg:grid-cols-6">
+              {detailTabs.map((tab) => {
+                const isActive = tab.key === activeTab;
+
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveTab(tab.key)}
+                    aria-selected={isActive}
+                    role="tab"
+                    className={`border-b-2 px-2 py-4 text-left text-[13px] font-semibold transition-colors sm:text-center ${
+                      isActive
+                        ? "border-accent text-accent"
+                        : "border-transparent text-foreground/70 hover:text-foreground"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div
+              role="tabpanel"
+              className="min-h-24 py-5 text-[13px] leading-relaxed text-foreground/70"
+            >
+              <p>{activeText}</p>
+            </div>
           </div>
         </div>
       </div>
