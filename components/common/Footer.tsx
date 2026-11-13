@@ -17,7 +17,7 @@ const shopLinks = [
 const discoverLinks = [
   { href: "/brands", label: "Brands" },
   { href: "/shop?sort=best-sellers", label: "Best Sellers" },
-  { href: "/shop?sort=new", label: "New Arrivals" },
+  { href: "/new-arrivals", label: "New Arrivals" },
   { href: "/offers", label: "Offers" },
 ];
 
