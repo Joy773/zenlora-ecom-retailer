@@ -15,20 +15,15 @@ export default function AdminSearchbar({
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
 
-  const clearSearch = () => {
-    setQuery("");
+  const updateSearch = (value: string) => {
+    setQuery(value);
+
+    window.dispatchEvent(
+      new CustomEvent("zenlora:admin-search-changed", { detail: value }),
+    );
 
     const params = new URLSearchParams(searchParams.toString());
-    params.delete("q");
-    const next = params.toString();
-    router.push(next ? `${basePath}?${next}` : basePath);
-  };
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const params = new URLSearchParams(searchParams.toString());
-    const trimmed = query.trim();
+    const trimmed = value.trim();
 
     if (trimmed) {
       params.set("q", trimmed);
@@ -37,7 +32,16 @@ export default function AdminSearchbar({
     }
 
     const next = params.toString();
-    router.push(next ? `${basePath}?${next}` : basePath);
+    router.replace(next ? `${basePath}?${next}` : basePath);
+  };
+
+  const clearSearch = () => {
+    updateSearch("");
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    updateSearch(query);
   };
 
   return (
@@ -51,7 +55,7 @@ export default function AdminSearchbar({
           id="admin-product-search"
           type="search"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => updateSearch(event.target.value)}
           placeholder={placeholder}
           className="w-full rounded-full border border-primary bg-white py-2.5 pr-10 pl-10 text-[13px] font-medium text-foreground outline-none transition-colors placeholder:text-foreground/40 hover:border-accent focus:border-accent [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
         />
