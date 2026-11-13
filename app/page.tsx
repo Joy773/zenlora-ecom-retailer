@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Categories from "@/components/categories";
 import AllProducts from "@/components/common/allProducts";
 import Hero from "@/components/common/hero";
@@ -8,7 +9,9 @@ export default function Home() {
     <>
       <Hero />
       <Categories />
-      <AllProducts />
+      <Suspense fallback={null}>
+        <AllProducts />
+      </Suspense>
       <NowTrending />
     </>
   );
