@@ -1,26 +1,23 @@
 import { notFound } from "next/navigation";
-import { getProductBySlug } from "@/components/common/allProducts";
 import ProductDetail from "@/components/common/productDetail";
+import { getStoreProductBySlug } from "@/lib/store-products";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
 };
 
-const sizes = ["30 ML", "50 ML", "100 ML"];
-
 export const instant = false;
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getStoreProductBySlug(slug);
 
   if (!product) {
     notFound();
   }
 
-  const description =
-    product.description ??
-    `${product.name} is a daily Zenlora essential, made for a calm and simple routine.`;
+  const sizes = product.sizePrices.map((variant) => variant.size).filter(Boolean);
+  const description = product.description || "No description available.";
 
   return (
     <ProductDetail
@@ -33,19 +30,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
         href: product.href,
       }}
       compareAtPrice={product.compareAtPrice}
-      images={[{ src: product.image, alt: product.alt }]}
+      images={product.images}
       sizes={sizes}
+      variants={product.sizePrices}
+      inStock={product.inStock && product.quantity > 0}
       info={{
-        description: `${description} Choose the size that fits how often you use it. The 50 ML size is the everyday option, with 30 ML for travel and 100 ML for a longer routine.`,
-        additional: [
-          { label: "Size", value: "50 ML" },
-          { label: "Brand", value: "Zenlora" },
-          { label: "Format", value: "Skincare" },
-        ],
-        aboutBrand:
-          "Zenlora makes quiet, everyday skincare. Each product is chosen to feel simple to use, gentle on skin, and easy to keep in a daily routine.",
-        shipping:
-          "Orders are packed within 1–2 business days. Delivery usually takes 2–4 business days. Free shipping applies on orders over $50.",
+        description,
+        aboutBrand: product.aboutBrand || "No brand information available.",
+        howToUse: product.howToUse || "No usage instructions available.",
+        keyBenefits: product.keyBenefits || "No key benefits available.",
+        keyIngredients: product.keyIngredients || "No key ingredients available.",
+        perfectFor: product.perfectFor || "No information available.",
       }}
     />
   );
