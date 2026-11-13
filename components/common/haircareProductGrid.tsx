@@ -1,15 +1,18 @@
 "use client";
 
-import {
-  HAIRCARE_PAGE_SIZE,
-  haircareProducts,
-} from "./allProducts";
 import CategoryProductGrid from "./categoryProductGrid";
+import type { StoreProduct } from "@/lib/store-products";
 
-export default function HaircareProductGrid() {
+const HAIRCARE_PAGE_SIZE = 9;
+
+export default function HaircareProductGrid({
+  products,
+}: {
+  products: StoreProduct[];
+}) {
   return (
     <CategoryProductGrid
-      products={haircareProducts}
+      products={products}
       pageSize={HAIRCARE_PAGE_SIZE}
       basePath="/haircare"
     />
