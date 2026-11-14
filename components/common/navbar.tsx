@@ -6,11 +6,13 @@ import { useState } from "react";
 import {
   HiOutlineBars3,
   HiOutlineChevronDown,
+  HiOutlineMagnifyingGlass,
   HiOutlineShoppingBag,
   HiOutlineXMark,
 } from "react-icons/hi2";
 import { useCart } from "@/context/cart-context";
 import { ShopNowButton } from "./button";
+import Searchbar from "./searchbar";
 
 const montserrat = Montserrat({
   weight: ["700", "800"],
@@ -410,6 +412,7 @@ function CartIcon({ onClick }: { onClick?: () => void }) {
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [expandedMobile, setExpandedMobile] = useState<string | null>(null);
 
   const closeMenu = () => {
@@ -481,11 +484,29 @@ export default function Navbar() {
         </ul>
 
         <div className="hidden shrink-0 items-center gap-3 lg:flex">
+          <button
+            type="button"
+            onClick={() => setSearchOpen((value) => !value)}
+            aria-expanded={searchOpen}
+            aria-label="Search products"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-foreground transition-all duration-200 hover:border-primary hover:bg-primary/50 hover:text-accent"
+          >
+            <HiOutlineMagnifyingGlass className="h-5 w-5" />
+          </button>
           <CartIcon />
           <ShopNowButton />
         </div>
 
         <div className="flex items-center gap-1 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setSearchOpen((value) => !value)}
+            aria-expanded={searchOpen}
+            aria-label="Search products"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-primary/60"
+          >
+            <HiOutlineMagnifyingGlass className="h-5 w-5" />
+          </button>
           <CartIcon onClick={closeMenu} />
           <button
             type="button"
@@ -503,6 +524,12 @@ export default function Navbar() {
           </button>
         </div>
       </nav>
+
+      {searchOpen ? (
+        <div className="absolute top-full left-1/2 z-50 w-[min(calc(100%-2rem),28rem)] -translate-x-1/2 border border-primary bg-white p-4 shadow-lg">
+          <Searchbar showResults />
+        </div>
+      ) : null}
 
       {open ? (
         <div
