@@ -57,7 +57,11 @@ function ProductCard({
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
                 sizes={sizes}
               />
-            ) : null}
+            ) : (
+              <span className="absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-foreground/55">
+                Product image is not available
+              </span>
+            )}
             {product.discount !== null && product.discount > 0 ? (
               <span className="absolute top-2 left-2 flex h-12 w-12 flex-col items-center justify-center rounded-full bg-accent text-center font-bold text-white">
                 <span className="text-[13px] leading-tight">{product.discount}%</span>
@@ -308,9 +312,10 @@ export default async function AllProducts() {
         shopLabel="Shop All Sunscreen"
         products={sunscreenProducts}
         portrait={{
-          src: "/products/portrait.jpg",
-          alt: "Close-up of a woman with glowing, protected skin",
+          src: "/products/sunscreen-poolside.jpg",
+          alt: "Woman applying sunscreen beside a swimming pool",
           priority: true,
+          className: "object-cover object-[68%_center]",
         }}
         imageSide="right"
       />
@@ -321,9 +326,9 @@ export default async function AllProducts() {
         shopLabel="Shop All Serum / Oils"
         products={serumProducts}
         portrait={{
-          src: "/products/serum-portrait.jpg",
-          alt: "Woman drawing serum from an amber dropper bottle",
-          className: "object-cover object-[center_20%]",
+          src: "/products/serum-application-robe.jpg",
+          alt: "Woman in a white bathrobe applying facial serum with a dropper",
+          className: "object-cover object-[72%_center]",
         }}
         imageSide="left"
       />
