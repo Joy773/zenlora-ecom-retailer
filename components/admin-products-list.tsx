@@ -38,6 +38,7 @@ type SavedProduct = {
     discountedPrice?: string;
     discountPercent?: number | null;
     images?: string[];
+    inStock?: boolean;
   }[];
   inStock: boolean;
   brand: string;
