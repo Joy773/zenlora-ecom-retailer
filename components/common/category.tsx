@@ -341,7 +341,8 @@ const priceFilters = [
   { value: "500-1000", label: "৳500 to ৳1000" },
   { value: "1000-1500", label: "৳1000 to ৳1500" },
   { value: "1500-2000", label: "৳1500 to ৳2000" },
-  { value: "over-2000", label: "Over ৳2000" },
+  { value: "2000-3000", label: "৳2000 to ৳3000" },
+  { value: "over-3000", label: "Over ৳3000" },
 ];
 
 function toSelectValue(option: CategoryOption) {
