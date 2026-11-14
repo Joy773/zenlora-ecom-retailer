@@ -38,6 +38,7 @@ const productSchema = new Schema(
           size: String,
           price: String,
           discountedPrice: String,
+          inStock: { type: Boolean, default: undefined },
           discountPercent: { type: Number, default: null },
           images: { type: [String], default: [] },
         },
