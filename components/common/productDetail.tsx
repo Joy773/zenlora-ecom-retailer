@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   HiOutlineCheck,
   HiOutlineChevronDown,
@@ -32,6 +32,7 @@ type ProductDetailProps = {
     price: string;
     discountedPrice: string;
     images?: string[];
+    inStock?: boolean;
   }[];
   inStock?: boolean;
   info: ProductDetailInfo;
@@ -58,6 +59,7 @@ export default function ProductDetail({
   info,
 }: ProductDetailProps) {
   const { addItem } = useCart();
+  const mobileGalleryRef = useRef<HTMLDivElement>(null);
   const [activeImage, setActiveImage] = useState(0);
   const [size, setSize] = useState(sizes[1] ?? sizes[0] ?? "");
   const [quantity, setQuantity] = useState(1);
@@ -65,6 +67,7 @@ export default function ProductDetail({
 
   const selectedVariant =
     variants.find((variant) => variant.size === size) ?? variants[0];
+  const selectedInStock = inStock && (selectedVariant?.inStock ?? true);
   const displayedImages =
     selectedVariant?.images?.length
       ? selectedVariant.images.map((src) => ({
@@ -82,7 +85,7 @@ export default function ProductDetail({
   const activeText = info[activeTab] || "No information available.";
 
   const handleAddToCart = () => {
-    if (!inStock) {
+    if (!selectedInStock) {
       toast.error("This product is currently out of stock.");
       return;
     }
@@ -112,9 +115,46 @@ export default function ProductDetail({
 
   return (
     <section className="bg-white px-8 py-10 sm:py-14 md:px-16 lg:px-20 lg:py-16">
-      <div className="grid w-full items-start gap-10 md:grid-cols-2 md:gap-14 lg:gap-20">
-        <div className="md:w-[92%]">
-          <div className="relative aspect-square overflow-hidden bg-[#f6e7e2]">
+      <div className="grid w-full grid-cols-1 items-start gap-10 md:grid-cols-2 md:gap-14 lg:gap-20">
+        <div className="min-w-0 md:w-[92%]">
+          {displayedImages.length > 0 ? (
+            <div
+              key={`${product.slug}-${size}`}
+              ref={mobileGalleryRef}
+              role="region"
+              aria-label="Product images"
+              tabIndex={0}
+              onScroll={(event) => {
+                const gallery = event.currentTarget;
+                if (gallery.clientWidth > 0) {
+                  setActiveImage(
+                    Math.min(
+                      displayedImages.length - 1,
+                      Math.max(0, Math.round(gallery.scrollLeft / gallery.clientWidth)),
+                    ),
+                  );
+                }
+              }}
+              className="flex w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-color:var(--color-accent)_#f6e7e2] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-accent [&::-webkit-scrollbar-track]:bg-[#f6e7e2] md:hidden"
+            >
+              {displayedImages.map((image, index) => (
+                <div
+                  key={`${image.src}-${index}`}
+                  className="relative aspect-square w-full shrink-0 snap-start overflow-hidden bg-[#f6e7e2]"
+                >
+                  <Image
+                    src={image.src}
+                    alt={image.alt}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 767px) calc(100vw - 4rem), 50vw"
+                    priority={index === 0}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <div className={`relative aspect-square overflow-hidden bg-[#f6e7e2] ${selectedImage ? "hidden md:block" : ""}`}>
             {selectedImage ? (
               <Image
                 src={selectedImage.src}
@@ -124,10 +164,18 @@ export default function ProductDetail({
                 sizes="(max-width: 768px) 100vw, 50vw"
                 priority
               />
-            ) : null}
+            ) : (
+              <span className="absolute inset-0 flex items-center justify-center px-4 text-center text-md text-foreground/55">
+                Product image is not available
+              </span>
+            )}
           </div>
           {displayedImages.length > 0 ? (
-            <div className="mt-4 grid grid-cols-4 gap-3">
+            <div
+              role="region"
+              aria-label="Product image thumbnails"
+              className="mt-4 grid grid-cols-4 gap-3"
+            >
               {displayedImages.map((image, index) => {
                 const isActive = index === activeImage;
 
@@ -135,8 +183,15 @@ export default function ProductDetail({
                   <button
                     key={`${image.src}-${index}`}
                     type="button"
-                    onClick={() => setActiveImage(index)}
+                    onClick={() => {
+                      setActiveImage(index);
+                      const gallery = mobileGalleryRef.current;
+                      if (gallery && gallery.clientWidth > 0) {
+                        gallery.scrollTo({ left: index * gallery.clientWidth });
+                      }
+                    }}
                     aria-label={`Show image ${index + 1}`}
+                    aria-pressed={isActive}
                     className={`relative aspect-square overflow-hidden bg-[#f6e7e2] ${
                       isActive ? "ring-1 ring-accent" : ""
                     }`}
@@ -212,11 +267,11 @@ export default function ProductDetail({
 
           <p
             className={`mt-5 flex items-center gap-2 text-sm ${
-              inStock ? "text-emerald-700" : "text-red-600"
+              selectedInStock ? "text-emerald-700" : "text-red-600"
             }`}
           >
-            {inStock ? <HiOutlineCheck className="h-4 w-4" /> : null}
-            {inStock ? "In stock" : "Out of stock"}
+            {selectedInStock ? <HiOutlineCheck className="h-4 w-4" /> : null}
+            {selectedInStock ? "In stock" : "Out of stock"}
           </p>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -241,11 +296,11 @@ export default function ProductDetail({
             </div>
             <button
               type="button"
-              disabled={!inStock}
+              disabled={!selectedInStock}
               onClick={handleAddToCart}
               className="h-11 rounded-full bg-accent px-6 text-xs font-semibold tracking-wide text-white uppercase transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {inStock ? "Add to cart" : "Out of stock"}
+              {selectedInStock ? "Add to cart" : "Out of stock"}
             </button>
           </div>
 
