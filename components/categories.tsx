@@ -9,8 +9,8 @@ const categories = [
   {
     href: "/skincare?type=cleanser",
     name: "Cleansers",
-    image: "/categories/cleanser-provided.png",
-    alt: "Bioderma Sebium purifying cleansing foaming gel",
+    image: "/categories/cleanser-anua.png",
+    alt: "Anua Heartleaf and BHA pore deep cleansing foam",
   },
   {
     href: "/skincare?type=toners-astringents",
