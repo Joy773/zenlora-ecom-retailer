@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { HiOutlineXMark } from "react-icons/hi2";
 import { toast } from "react-toastify";
@@ -27,6 +28,7 @@ export type ProductFormValues = {
     discountedPrice?: string;
     discountPercent?: number | null;
     images?: string[];
+    inStock?: boolean;
   }[];
   inStock?: boolean;
   brand?: string;
@@ -90,6 +92,8 @@ export function AddProductModal({
   const [sizeInput, setSizeInput] = useState("");
   const [sizePriceInput, setSizePriceInput] = useState("");
   const [sizeDiscountPriceInput, setSizeDiscountPriceInput] = useState("");
+  const [editingSize, setEditingSize] = useState<string | null>(null);
+  const [sizeError, setSizeError] = useState("");
   const [sizes, setSizes] = useState<string[]>([]);
   const [sizePrices, setSizePrices] = useState<
     {
@@ -98,11 +102,11 @@ export function AddProductModal({
       discountedPrice?: string;
       discountPercent?: number | null;
       images: string[];
+      inStock: boolean;
     }[]
   >([]);
   const [sizeImageFiles, setSizeImageFiles] = useState<Record<string, File[]>>({});
   const sizeImageInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const [inStock, setInStock] = useState(true);
   const [brand, setBrand] = useState("Zenlora");
   const [format, setFormat] = useState("");
   const [aboutBrand, setAboutBrand] = useState("");
@@ -135,10 +139,11 @@ export function AddProductModal({
     setSizeInput("");
     setSizePriceInput("");
     setSizeDiscountPriceInput("");
+    setEditingSize(null);
+    setSizeError("");
     setSizes([]);
     setSizePrices([]);
     setSizeImageFiles({});
-    setInStock(true);
     setBrand("Zenlora");
     setFormat("");
     setAboutBrand("");
@@ -170,15 +175,17 @@ export function AddProductModal({
       setSizeInput("");
       setSizePriceInput("");
       setSizeDiscountPriceInput("");
+      setEditingSize(null);
+      setSizeError("");
       setSizes(initialValues.sizes ?? []);
       setSizePrices(
         (initialValues.sizePrices ?? []).map((variant) => ({
           ...variant,
           images: variant.images ?? [],
+          inStock: variant.inStock ?? initialValues.inStock ?? true,
         })),
       );
       setSizeImageFiles({});
-      setInStock(initialValues.inStock ?? true);
       setBrand(initialValues.brand ?? "Zenlora");
       setFormat(initialValues.format ?? "");
       setAboutBrand(initialValues.aboutBrand ?? "");
@@ -212,24 +219,64 @@ export function AddProductModal({
     setSubcategory("");
   };
 
+  const cancelSizeEdit = () => {
+    setEditingSize(null);
+    setSizeInput("");
+    setSizePriceInput("");
+    setSizeDiscountPriceInput("");
+    setSizeError("");
+  };
+
+  const editSize = (size: string) => {
+    const variant = sizePrices.find((item) => item.size === size);
+    setEditingSize(size);
+    setSizeInput(size);
+    setSizePriceInput(variant?.price ?? "");
+    setSizeDiscountPriceInput(variant?.discountedPrice ?? "");
+    setSizeError("");
+  };
+
   const addSize = () => {
     const next = sizeInput.trim();
     const nextPrice = sizePriceInput.trim();
     const nextDiscountPrice = sizeDiscountPriceInput.trim();
-    if (!next || !nextPrice) return;
+    if (!next || !nextPrice) {
+      setSizeError("Enter a size and price.");
+      return;
+    }
 
-    if (sizes.some((item) => item.toLowerCase() === next.toLowerCase())) return;
-    setSizes((current) => [...current, next]);
-    setSizePrices((current) => [
-      ...current,
-      { size: next, price: nextPrice, discountedPrice: nextDiscountPrice || undefined, images: [] },
-    ]);
-    setSizeInput("");
-    setSizePriceInput("");
-    setSizeDiscountPriceInput("");
+    if (sizes.some((item) => item !== editingSize && item.toLowerCase() === next.toLowerCase())) {
+      setSizeError("This size already exists. Choose a different size name.");
+      return;
+    }
+
+    const updatedValues = {
+      size: next,
+      price: nextPrice,
+      discountedPrice: nextDiscountPrice || undefined,
+      discountPercent: getDiscountPercent(nextPrice, nextDiscountPrice),
+    };
+    if (editingSize !== null) {
+      setSizes((current) => current.map((item) => item === editingSize ? next : item));
+      setSizePrices((current) => current.map((variant) =>
+        variant.size === editingSize ? { ...variant, ...updatedValues } : variant,
+      ));
+      if (next !== editingSize) {
+        setSizeImageFiles((current) => {
+          const updated = { ...current, [next]: current[editingSize] ?? [] };
+          delete updated[editingSize];
+          return updated;
+        });
+      }
+    } else {
+      setSizes((current) => [...current, next]);
+      setSizePrices((current) => [...current, { ...updatedValues, images: [], inStock: true }]);
+    }
+    cancelSizeEdit();
   };
 
   const removeSize = (size: string) => {
+    if (editingSize === size) cancelSizeEdit();
     setSizes((current) => current.filter((item) => item !== size));
     setSizePrices((current) => current.filter((item) => item.size !== size));
     setSizeImageFiles((current) => {
@@ -254,6 +301,11 @@ export function AddProductModal({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (editingSize !== null) {
+      setFormError("Save or cancel the size edit before saving the product.");
+      return;
+    }
+
     if (!sizePrices[0]?.price && !price) {
       setFormError("Add at least one size with a price before saving.");
       return;
@@ -277,7 +329,7 @@ export function AddProductModal({
     formData.set("seoMetaTitle", seoMetaTitle);
     formData.set("seoMetaDescription", seoMetaDescription);
     formData.set("seoSlug", seoSlug);
-    formData.set("inStock", String(inStock));
+    formData.set("inStock", String(sizePrices.some((variant) => variant.inStock)));
     formData.set("brand", brand);
     formData.set("format", format);
     formData.set("aboutBrand", aboutBrand);
@@ -513,11 +565,21 @@ export function AddProductModal({
                 onClick={addSize}
                 className="self-start"
               >
-                Add
+                {editingSize !== null ? "Save size" : "Add"}
               </Button>
             </div>
+            {editingSize !== null ? (
+              <button
+                type="button"
+                onClick={cancelSizeEdit}
+                className="self-start text-sm text-accent"
+              >
+                Cancel size edit
+              </button>
+            ) : null}
+            {sizeError ? <p role="alert" className="text-sm text-red-600">{sizeError}</p> : null}
             {sizes.length > 0 ? (
-              <ul className="flex flex-wrap gap-2">
+              <ul className="flex flex-col gap-3">
                 {sizes.map((size) => (
                   <li key={size}>
                     <input type="hidden" name="sizes" value={size} />
@@ -528,13 +590,22 @@ export function AddProductModal({
                         (sizeImageFiles[size]?.length ?? 0);
 
                       return (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-primary bg-white py-1 pr-1 pl-3 text-[13px] text-foreground">
+                    <span className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-primary bg-white py-1 pr-1 pl-3 text-[13px] text-foreground">
                       {size} · {variant?.price}
                       {variant?.discountedPrice ? (
                         <span className="text-accent">
                           → {variant.discountedPrice} ({getDiscountPercent(variant.price, variant.discountedPrice) ?? "—"}% off)
                         </span>
                       ) : null}
+                      <button
+                        type="button"
+                        onClick={() => editSize(size)}
+                        disabled={editingSize !== null}
+                        className="px-2 text-accent disabled:opacity-40"
+                        aria-label={`Edit ${size}`}
+                      >
+                        Edit
+                      </button>
                       <input
                         ref={(element) => {
                           sizeImageInputRefs.current[size] = element;
@@ -565,6 +636,59 @@ export function AddProductModal({
                     </span>
                       );
                     })()}
+                    <label className="mt-2 flex cursor-pointer items-center gap-2 text-[13px] text-foreground/70">
+                      <input
+                        type="checkbox"
+                        checked={sizePrices.find((variant) => variant.size === size)?.inStock ?? true}
+                        onChange={(event) => {
+                          const checked = event.target.checked;
+                          setSizePrices((current) => current.map((variant) =>
+                            variant.size === size ? { ...variant, inStock: checked } : variant,
+                          ));
+                        }}
+                        aria-label={`In stock for ${size}`}
+                        className="h-4 w-4 shrink-0 appearance-none rounded border border-foreground/20 checked:border-accent checked:bg-accent"
+                      />
+                      <span>In stock</span>
+                    </label>
+                    <ul className="mt-2 space-y-2">
+                      {(sizePrices.find((item) => item.size === size)?.images ?? []).map((src, index) => (
+                        <li key={`${src}-${index}`} className="flex items-center gap-2 text-sm">
+                          <a href={src} target="_blank" rel="noreferrer" className="flex min-w-0 flex-1 items-center gap-2">
+                            <Image src={src} alt={`${size} image ${index + 1}`} width={48} height={48} unoptimized className="h-12 w-12 rounded object-cover" />
+                            Image {index + 1}
+                          </a>
+                          <button
+                            type="button"
+                            aria-label={`Remove image ${index + 1} for ${size}`}
+                            className="p-2 text-accent"
+                            onClick={() => setSizePrices((current) => current.map((variant) =>
+                              variant.size === size
+                                ? { ...variant, images: variant.images.filter((_, imageIndex) => imageIndex !== index) }
+                                : variant,
+                            ))}
+                          >
+                            <HiOutlineXMark className="h-4 w-4" />
+                          </button>
+                        </li>
+                      ))}
+                      {(sizeImageFiles[size] ?? []).map((file, index) => (
+                        <li key={`${file.name}-${index}`} className="flex items-center gap-2 text-sm">
+                          <span className="min-w-0 flex-1 truncate">{file.name}</span>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${file.name} for ${size}`}
+                            className="p-2 text-accent"
+                            onClick={() => setSizeImageFiles((current) => ({
+                              ...current,
+                              [size]: (current[size] ?? []).filter((_, imageIndex) => imageIndex !== index),
+                            }))}
+                          >
+                            <HiOutlineXMark className="h-4 w-4" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
                   </li>
                 ))}
               </ul>
@@ -574,17 +698,6 @@ export function AddProductModal({
               </p>
             )}
           </div>
-
-          <label className="flex cursor-pointer items-center gap-2 text-[13px] text-foreground/70 transition-colors hover:text-foreground">
-            <input
-              type="checkbox"
-              name="inStock"
-              checked={inStock}
-              onChange={(event) => setInStock(event.target.checked)}
-              className="h-4 w-4 shrink-0 appearance-none rounded border border-foreground/20 checked:border-accent checked:bg-accent"
-            />
-            <span>In stock</span>
-          </label>
 
           <label className="flex flex-col gap-2">
             <span className="text-[12px] font-medium tracking-wide text-foreground/70">
