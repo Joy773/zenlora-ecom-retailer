@@ -82,7 +82,11 @@ export default function CategoryProductGrid({
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                         sizes="(max-width: 768px) 45vw, 33vw"
                       />
-                    ) : null}
+                    ) : (
+                      <span className="absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-foreground/55">
+                        Product image is not available
+                      </span>
+                    )}
                     {product.discount !== null && product.discount > 0 ? (
                       <span className="absolute top-2 left-2 flex h-12 w-12 flex-col items-center justify-center rounded-full bg-accent text-center font-bold text-white">
                         <span className="text-[13px] leading-tight">{product.discount}%</span>
