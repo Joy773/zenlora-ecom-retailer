@@ -3,6 +3,7 @@ import { connectMongoose } from "@/lib/mongoose";
 import { getDiscountPercent, Product } from "@/models/Product";
 
 export type StoreProductVariant = {
+  inStock: boolean;
   size: string;
   price: string;
   discountedPrice: string;
@@ -71,6 +72,7 @@ type ProductRecord = {
   seoSlug?: string;
   sizes?: string[];
   sizePrices?: {
+    inStock?: boolean;
     size?: string;
     price?: string;
     discountedPrice?: string;
@@ -112,8 +114,10 @@ function matchesPriceFilter(price: number, filter: string) {
       return price >= 1000 && price < 1500;
     case "1500-2000":
       return price >= 1500 && price < 2000;
-    case "over-2000":
-      return price >= 2000;
+    case "2000-3000":
+      return price >= 2000 && price <= 3000;
+    case "over-3000":
+      return price > 3000;
     default:
       return false;
   }
@@ -123,6 +127,7 @@ function mapProduct(product: ProductRecord): StoreProduct {
   const variants: StoreProductVariant[] = (product.sizePrices ?? []).map(
     (variant) => ({
       size: firstValue(variant.size),
+      inStock: variant.inStock ?? product.inStock ?? true,
       price: firstValue(variant.price),
       discountedPrice: firstValue(variant.discountedPrice),
       discountPercent: getDiscountPercent(
@@ -158,7 +163,7 @@ function mapProduct(product: ProductRecord): StoreProduct {
     seoMetaDescription: firstValue(product.seoMetaDescription),
     sizes: Array.isArray(product.sizes) ? product.sizes.filter(Boolean) : [],
     sizePrices: variants,
-    inStock: product.inStock ?? true,
+    inStock: variants.length ? variants.some((variant) => variant.inStock) : product.inStock ?? true,
     quantity: product.quantity,
     brand: firstValue(product.brand),
     format: firstValue(product.format),
