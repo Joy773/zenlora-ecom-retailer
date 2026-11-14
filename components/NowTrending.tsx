@@ -1,19 +1,19 @@
 const trendingVideos = [
   {
     src: "/trending/1.mp4",
-    label: "Glow ritual",
+    label: "celimax the vita-a retinal shot tightening booster ",
   },
   {
     src: "/trending/2.mp4",
-    label: "Daily SPF",
+    label: "arencia vitamin c booster shot",
   },
   {
     src: "/trending/3.mp4",
-    label: "Serum moment",
+    label: "medicube Kojic Acid Turmeric Niacinamide Serum 30ml",
   },
   {
     src: "/trending/4.mp4",
-    label: "Skin reset",
+    label: "The Medicube Capsule Cream Lineup",
   },
 ];
 
@@ -48,7 +48,7 @@ export default function NowTrending() {
                 aria-label={video.label}
               />
             </div>
-            <p className="mt-3 text-[13px] text-foreground">{video.label}</p>
+            <p className="mt-3 text-[13px] font-semibold text-foreground/80">{video.label}</p>
           </li>
         ))}
       </ul>
