@@ -2,7 +2,7 @@ import Image from "next/image";
 import { ShopNowButton, ShopTheBrandButton } from "./button";
 
 const slide = {
-  brand: "Body Care Edit",
+  brand: "Body Care",
   title: "Soft skin, head to toe",
   description:
     "Dermatologist-trusted body wash and lotions for rough, dry, and itchy skin. Cleanse, soothe, and lock in 48-hour moisture.",
