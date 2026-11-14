@@ -55,7 +55,7 @@ export default function Searchbar({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={placeholder}
-          className="w-full rounded-xl border border-primary bg-background py-3 pr-10 pl-10 text-[13px] font-medium text-foreground outline-none transition-colors placeholder:text-foreground/40 hover:border-accent focus:border-accent [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
+          className="w-full rounded-xl border border-primary bg-white py-3 pr-10 pl-10 text-[13px] font-medium text-foreground outline-none transition-colors placeholder:text-foreground/40 hover:border-accent focus:border-accent [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
         />
         {query ? (
           <button

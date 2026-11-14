@@ -7,40 +7,40 @@ import { HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi2";
 
 const categories = [
   {
-    href: "/shop?category=cleansers",
+    href: "/skincare?type=cleanser",
     name: "Cleansers",
-    image: "/categories/cleanser.jpg",
-    alt: "Purple tube of facial cleanser with a smear of cream",
+    image: "/categories/cleanser-ai.jpg",
+    alt: "Unbranded lavender facial cleanser tube with foam",
   },
   {
-    href: "/shop?category=toners",
+    href: "/skincare?type=toners-astringents",
     name: "Toners",
-    image: "/categories/toner.jpg",
-    alt: "White bottle of facial toner standing in front of its box",
+    image: "/categories/toner-ai.jpg",
+    alt: "Unbranded facial toner bottle on a warm studio background",
   },
   {
-    href: "/shop?category=serum-oils",
+    href: "/skincare?type=serum-oils",
     name: "Serum / Oils",
-    image: "/categories/serum.jpg",
-    alt: "Open glass serum bottle with a white dropper beside it",
+    image: "/categories/serum-ai.jpg",
+    alt: "Amber serum dropper bottle with a soft pink background",
   },
   {
-    href: "/shop?category=moisturizers",
+    href: "/skincare?type=moisturizers",
     name: "Moisturizers",
-    image: "/categories/moisturizer.jpg",
-    alt: "Open pink jar of face cream with the lid beside it",
+    image: "/categories/moisturizer-ai.jpg",
+    alt: "Unbranded moisturizer jar with cream",
   },
   {
-    href: "/shop?category=sunscreen",
+    href: "/skincare?type=sunscreen",
     name: "Sunscreen",
-    image: "/categories/spf.jpg",
-    alt: "Coral tube of SPF 50 body sunscreen next to its box",
+    image: "/categories/spf-ai.jpg",
+    alt: "Unbranded sunscreen tube in warm sunlight",
   },
   {
-    href: "/shop?category=masks",
+    href: "/skincare?type=masks-peels",
     name: "Masks",
-    image: "/categories/mask.jpg",
-    alt: "Two packaged sheet masks on a white towel",
+    image: "/categories/mask-ai.jpg",
+    alt: "Unbranded face mask packet and clay mask bowl",
   },
 ];
 
@@ -73,7 +73,7 @@ export default function Categories() {
           Find the step you need, from first cleanse to last layer of sun care.
         </p>
         <Link
-          href="/shop"
+          href="/skincare"
           className="mt-5 inline-flex items-center gap-2 text-[13px] font-bold text-foreground"
         >
           Shop All Categories
@@ -109,10 +109,10 @@ export default function Categories() {
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                       sizes="(max-width: 768px) 45vw, 33vw"
                     />
+                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent px-4 pt-10 pb-4 text-sm font-medium text-white">
+                      {category.name}
+                    </span>
                   </div>
-                  <p className="mt-3 text-[13px] text-foreground">
-                    {category.name}
-                  </p>
                 </Link>
               </li>
             ))}

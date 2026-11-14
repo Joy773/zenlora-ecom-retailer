@@ -12,8 +12,8 @@ const slide = {
 
 export default function Hero() {
   return (
-    <section className="relative min-h-[32rem] overflow-hidden bg-background md:min-h-[38rem] lg:min-h-[42rem]">
-      <div className="absolute inset-0">
+    <section className="relative min-h-[32rem] overflow-hidden bg-[#EDD9C7] md:min-h-[38rem] md:bg-background lg:min-h-[42rem]">
+      <div className="absolute inset-0 hidden md:block">
         <Image
           src={slide.image}
           alt={slide.alt}
@@ -24,8 +24,8 @@ export default function Hero() {
         />
       </div>
 
-      <div className="relative z-10 flex min-h-[32rem] w-full items-center px-8 py-16 md:min-h-[38rem] md:px-16 lg:min-h-[42rem] lg:px-20">
-        <div className="max-w-fit text-left">
+      <div className="relative z-10 flex min-h-[32rem] w-full items-center justify-center px-8 py-16 md:min-h-[38rem] md:justify-start md:px-16 lg:min-h-[42rem] lg:px-20">
+        <div className="max-w-fit text-center md:text-left">
           <p className="text-sm font-medium tracking-[0.2em] text-accent uppercase">
             {slide.brand}
           </p>
@@ -35,7 +35,7 @@ export default function Hero() {
           <p className="mt-5 max-w-md text-base leading-relaxed text-foreground/80 md:max-w-lg md:text-lg">
             {slide.description}
           </p>
-          <div className="mt-6 flex flex-wrap justify-start gap-3">
+          <div className="mt-6 flex flex-wrap justify-center gap-3 md:justify-start">
             <ShopNowButton />
             <ShopTheBrandButton />
           </div>

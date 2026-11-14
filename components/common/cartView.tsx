@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { HiOutlineTrash } from "react-icons/hi2";
 import { formatCartMoney, useCart } from "@/context/cart-context";
+import { formatPrice } from "@/lib/format-price";
 import Button from "./button";
 import { QuantityStepper } from "./productCartActions";
 
@@ -93,14 +95,16 @@ export default function CartView() {
                     {item.name}
                   </Link>
                   <p className="mt-1 text-[14px] font-medium text-foreground">
-                    {item.price}
+                    {formatPrice(item.price)}
                   </p>
                   <button
                     type="button"
                     onClick={() => removeItem(item.slug)}
-                    className="mt-2 text-[12px] text-foreground/50 transition-colors hover:text-accent"
+                    aria-label={`Remove ${item.name} from cart`}
+                    title="Remove from cart"
+                    className="mt-2 inline-flex h-7 w-7 items-center justify-center rounded-full text-foreground/50 transition-colors hover:bg-primary/50 hover:text-accent"
                   >
-                    Remove
+                    <HiOutlineTrash className="h-4 w-4" />
                   </button>
                 </div>
 

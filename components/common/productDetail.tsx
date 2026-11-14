@@ -11,6 +11,7 @@ import {
 import { toast } from "react-toastify";
 import type { CartProduct } from "@/context/cart-context";
 import { useCart } from "@/context/cart-context";
+import { formatPrice } from "@/lib/format-price";
 
 export type ProductDetailInfo = {
   description: string;
@@ -30,6 +31,7 @@ type ProductDetailProps = {
     size: string;
     price: string;
     discountedPrice: string;
+    images?: string[];
   }[];
   inStock?: boolean;
   info: ProductDetailInfo;
@@ -63,12 +65,19 @@ export default function ProductDetail({
 
   const selectedVariant =
     variants.find((variant) => variant.size === size) ?? variants[0];
+  const displayedImages =
+    selectedVariant?.images?.length
+      ? selectedVariant.images.map((src) => ({
+          src,
+          alt: `${product.name} ${selectedVariant.size}`,
+        }))
+      : images;
   const selectedPrice =
     selectedVariant?.discountedPrice || selectedVariant?.price || product.price;
   const selectedCompareAtPrice = selectedVariant?.discountedPrice
     ? selectedVariant.price
     : compareAtPrice;
-  const selectedImage = images[activeImage] ?? images[0];
+  const selectedImage = displayedImages[activeImage] ?? displayedImages[0];
   const variantName = size ? `${product.name} ${size}` : product.name;
   const activeText = info[activeTab] || "No information available.";
 
@@ -117,9 +126,9 @@ export default function ProductDetail({
               />
             ) : null}
           </div>
-          {images.length > 0 ? (
+          {displayedImages.length > 0 ? (
             <div className="mt-4 grid grid-cols-4 gap-3">
-              {images.map((image, index) => {
+              {displayedImages.map((image, index) => {
                 const isActive = index === activeImage;
 
                 return (
@@ -154,10 +163,10 @@ export default function ProductDetail({
           <div className="mt-4 flex items-baseline gap-3">
             {selectedCompareAtPrice ? (
               <p className="text-sm text-foreground/40 line-through">
-                {selectedCompareAtPrice}
+                {formatPrice(selectedCompareAtPrice)}
               </p>
             ) : null}
-            <p className="text-xl font-semibold text-accent">{selectedPrice}</p>
+            <p className="text-xl font-semibold text-accent">{formatPrice(selectedPrice)}</p>
           </div>
 
           <div className="mt-6">
@@ -169,7 +178,10 @@ export default function ProductDetail({
                 <select
                   id="product-size"
                   value={size}
-                  onChange={(event) => setSize(event.target.value)}
+                  onChange={(event) => {
+                    setSize(event.target.value);
+                    setActiveImage(0);
+                  }}
                   className="min-w-40 appearance-none border border-foreground/15 bg-white px-3 py-2 pr-9 text-sm text-foreground outline-none focus:border-accent"
                 >
                   <option value="" disabled>
@@ -186,7 +198,10 @@ export default function ProductDetail({
               {size ? (
                 <button
                   type="button"
-                  onClick={() => setSize("")}
+                  onClick={() => {
+                    setSize("");
+                    setActiveImage(0);
+                  }}
                   className="text-sm text-foreground/45 transition-colors hover:text-foreground"
                 >
                   × Clear

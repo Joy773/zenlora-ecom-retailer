@@ -102,6 +102,7 @@ export async function GET() {
       subcategory: product.subcategory,
       isNewArrival: Boolean(product.isNewArrival),
       isOffer: Boolean(product.isOffer),
+      isBestSelling: Boolean(product.isBestSelling),
     })),
   });
 }
@@ -184,6 +185,7 @@ export async function POST(request: Request) {
     subcategory,
     isNewArrival: flag(formData, "isNewArrival"),
     isOffer: flag(formData, "isOffer"),
+    isBestSelling: flag(formData, "isBestSelling"),
   });
 
   return NextResponse.json({ id: product._id.toString() });
@@ -280,6 +282,7 @@ export async function PATCH(request: Request) {
   product.subcategory = subcategory;
   product.isNewArrival = flag(formData, "isNewArrival");
   product.isOffer = flag(formData, "isOffer");
+  product.isBestSelling = flag(formData, "isBestSelling");
 
   await product.save();
   await Product.updateOne(

@@ -337,11 +337,11 @@ export const makeupCategoryGroups: CategoryGroup[] = [
 ];
 
 const priceFilters = [
-  { value: "under-50", label: "Under $50" },
-  { value: "50-100", label: "$50 to $100" },
-  { value: "100-150", label: "$100 to $150" },
-  { value: "150-200", label: "$150 to $200" },
-  { value: "over-200", label: "Over $200" },
+  { value: "under-500", label: "Under ৳500" },
+  { value: "500-1000", label: "৳500 to ৳1000" },
+  { value: "1000-1500", label: "৳1000 to ৳1500" },
+  { value: "1500-2000", label: "৳1500 to ৳2000" },
+  { value: "over-2000", label: "Over ৳2000" },
 ];
 
 function toSelectValue(option: CategoryOption) {

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getStoreProducts, type StoreProduct } from "@/lib/store-products";
+import { formatPrice } from "@/lib/format-price";
 import { ProductCardAddToCartIcon } from "./productCartActions";
 
 export type Product = Pick<
@@ -71,15 +72,15 @@ function ProductCard({
         </Link>
         <ProductCardAddToCartIcon product={cartProduct} />
       </div>
-      <div className="mt-3">
+      <div className="mt-2">
         <Link href={productHref}>
-          <p className="line-clamp-2 min-h-[2.5rem] text-[13px] leading-snug text-foreground transition-colors hover:text-accent">
+          <p className="line-clamp-2 min-h-[2.5rem] text-[13px] leading-tight text-foreground transition-colors hover:text-accent">
             {product.name}
           </p>
-          <p className="mt-0.5 text-[13px] text-foreground">{product.price}</p>
+          <p className="text-[14px] font-semibold leading-tight text-foreground">{formatPrice(product.price)}</p>
           {product.compareAtPrice ? (
             <p className="text-[12px] text-foreground/45 line-through">
-              {product.compareAtPrice}
+              {formatPrice(product.compareAtPrice)}
             </p>
           ) : null}
         </Link>

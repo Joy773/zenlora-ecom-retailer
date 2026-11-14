@@ -302,9 +302,9 @@ const bestSellersMenu: NonNullable<NavLink["children"]> = [
   {
     title: "Categories",
     items: [
-      { href: "/makeup", label: "Makeup" },
-      { href: "/skincare", label: "Skincare" },
-      { href: "/haircare", label: "Haircare" },
+      { href: "/makeup?flag=best-selling", label: "Makeup" },
+      { href: "/skincare?flag=best-selling", label: "Skincare" },
+      { href: "/haircare?flag=best-selling", label: "Haircare" },
     ],
   },
 ];
@@ -395,7 +395,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="relative z-40 border-b border-primary bg-background">
+    <header className="relative z-40 border-b border-primary bg-white">
       <nav className="flex items-center justify-between gap-4 px-8 py-4 md:px-16 lg:px-20">
         <Link
           href="/"
@@ -423,7 +423,7 @@ export default function Navbar() {
 
               {link.children ? (
                 <div className="invisible absolute top-full left-1/2 z-50 w-max max-w-[90vw] -translate-x-1/2 pt-4 opacity-0 transition duration-200 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-                  <div className="rounded-xl border border-primary bg-background p-6 shadow-lg">
+                  <div className="rounded-xl border border-primary bg-white p-6 shadow-lg">
                     <div
                       className="grid gap-x-10 gap-y-6"
                       style={{

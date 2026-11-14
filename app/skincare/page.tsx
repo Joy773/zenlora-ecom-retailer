@@ -23,8 +23,10 @@ async function SkincarePageContent({ searchParams }: PageProps) {
     type: valueOf(params.type),
     concern: valueOf(params.concern),
     search: valueOf(params.q),
+    price: valueOf(params.price)?.split(",").filter(Boolean),
     isNewArrival: flag === "new" ? true : undefined,
     isOffer: flag === "offer" ? true : undefined,
+    isBestSelling: flag === "best-selling" ? true : undefined,
   });
 
   return (

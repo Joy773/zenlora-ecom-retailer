@@ -48,6 +48,7 @@ type SavedProduct = {
   subcategory: string;
   isNewArrival: boolean;
   isOffer: boolean;
+  isBestSelling: boolean;
 };
 
 type AdminProduct = SavedProduct & {
@@ -100,6 +101,7 @@ function toFormValues(product: AdminProduct): ProductFormValues {
     subcategory: product.subcategory,
     isNewArrival: product.isNewArrival,
     isOffer: product.isOffer,
+    isBestSelling: product.isBestSelling,
   };
 }
 
@@ -331,6 +333,11 @@ export default function AdminProductsList() {
                         {product.isOffer ? (
                           <span className="rounded-full bg-accent px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">
                             Offer
+                          </span>
+                        ) : null}
+                        {product.isBestSelling ? (
+                          <span className="rounded-full bg-foreground px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">
+                            Best Selling
                           </span>
                         ) : null}
                       </div>

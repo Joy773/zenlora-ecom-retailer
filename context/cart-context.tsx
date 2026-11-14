@@ -273,9 +273,7 @@ export function useCart() {
 }
 
 export function formatCartMoney(amount: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
+  return `৳${new Intl.NumberFormat("en-BD", {
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(amount)}`;
 }

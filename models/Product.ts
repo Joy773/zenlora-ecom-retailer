@@ -53,6 +53,7 @@ const productSchema = new Schema(
     subcategory: { type: String, required: true, trim: true },
     isNewArrival: { type: Boolean, default: false },
     isOffer: { type: Boolean, default: false },
+    isBestSelling: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

@@ -40,16 +40,21 @@ export type StoreProduct = {
   subcategory: string;
   isNewArrival: boolean;
   isOffer: boolean;
+  isBestSelling: boolean;
 };
 
 type StoreProductOptions = {
   category?: string;
+  subcategory?: string;
   type?: string;
   concern?: string;
   search?: string;
   isNewArrival?: boolean;
   isOffer?: boolean;
+  isBestSelling?: boolean;
+  price?: string[];
   limit?: number;
+  excludeId?: string;
 };
 
 type ProductRecord = {
@@ -81,6 +86,7 @@ type ProductRecord = {
   subcategory: string;
   isNewArrival?: boolean;
   isOffer?: boolean;
+  isBestSelling?: boolean;
 };
 
 function escapeRegex(value: string) {
@@ -89,6 +95,28 @@ function escapeRegex(value: string) {
 
 function firstValue(value: string | undefined) {
   return value?.trim() ?? "";
+}
+
+function numericPrice(value: string) {
+  const amount = Number(value.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(amount) ? amount : null;
+}
+
+function matchesPriceFilter(price: number, filter: string) {
+  switch (filter) {
+    case "under-500":
+      return price < 500;
+    case "500-1000":
+      return price >= 500 && price < 1000;
+    case "1000-1500":
+      return price >= 1000 && price < 1500;
+    case "1500-2000":
+      return price >= 1500 && price < 2000;
+    case "over-2000":
+      return price >= 2000;
+    default:
+      return false;
+  }
 }
 
 function mapProduct(product: ProductRecord): StoreProduct {
@@ -140,6 +168,7 @@ function mapProduct(product: ProductRecord): StoreProduct {
     subcategory: product.subcategory,
     isNewArrival: Boolean(product.isNewArrival),
     isOffer: Boolean(product.isOffer),
+    isBestSelling: Boolean(product.isBestSelling),
   };
 }
 
@@ -151,12 +180,23 @@ export async function getStoreProducts(
   const filter: Record<string, unknown> = {};
 
   if (options.category) filter.category = options.category;
-  if (options.type) filter.subcategory = `type:${options.type}`;
-  if (options.concern) filter.subcategory = `concern:${options.concern}`;
+  if (options.subcategory) {
+    filter.subcategory = options.subcategory;
+  } else if (options.type) {
+    filter.subcategory = `type:${options.type}`;
+  } else if (options.concern) {
+    filter.subcategory = `concern:${options.concern}`;
+  }
+  if (options.excludeId && mongoose.isValidObjectId(options.excludeId)) {
+    filter._id = { $ne: new mongoose.Types.ObjectId(options.excludeId) };
+  }
   if (options.isNewArrival !== undefined) {
     filter.isNewArrival = options.isNewArrival;
   }
   if (options.isOffer !== undefined) filter.isOffer = options.isOffer;
+  if (options.isBestSelling !== undefined) {
+    filter.isBestSelling = options.isBestSelling;
+  }
 
   const search = options.search?.trim();
   if (search) {
@@ -172,7 +212,18 @@ export async function getStoreProducts(
   if (options.limit) query.limit(options.limit);
 
   const products = (await query.lean()) as unknown as ProductRecord[];
-  return products.map(mapProduct);
+  const mappedProducts = products.map(mapProduct);
+
+  const priceFilters = options.price;
+  if (!priceFilters?.length) return mappedProducts;
+
+  return mappedProducts.filter((product) => {
+    const price = numericPrice(product.price);
+    return (
+      price !== null &&
+      priceFilters.some((filter) => matchesPriceFilter(price, filter))
+    );
+  });
 }
 
 export async function getStoreProductBySlug(

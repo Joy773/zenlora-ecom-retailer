@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import type { CartProduct } from "@/context/cart-context";
 import type { StoreProduct } from "@/lib/store-products";
+import { formatPrice } from "@/lib/format-price";
 import { ProductCardAddToCartIcon } from "./productCartActions";
 import Pagination from "./pagination";
 
@@ -96,19 +97,23 @@ export default function CategoryProductGrid({
                 </Link>
                 <ProductCardAddToCartIcon product={toCartProduct(product)} />
               </div>
-              <div className="mt-3 min-h-0">
+              <div className="mt-2 min-h-0">
                 <Link href={product.href} className="min-w-0">
-                  <p className="line-clamp-2 text-[12px] leading-snug text-foreground sm:text-[13px]">
-                    {product.name}
-                  </p>
-                  <p className="mt-0.5 text-[12px] text-foreground sm:text-[13px]">
-                    {product.price}
-                  </p>
-                  {product.compareAtPrice ? (
-                    <p className="text-[11px] text-foreground/45 line-through sm:text-[12px]">
-                      {product.compareAtPrice}
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="min-w-0 flex-1 truncate text-[12px] leading-tight text-foreground sm:text-[13px]">
+                      {product.name}
                     </p>
-                  ) : null}
+                    <div className="shrink-0 text-right">
+                      <p className="text-[14px] font-semibold leading-tight text-foreground sm:text-[15px]">
+                        {formatPrice(product.price)}
+                      </p>
+                      {product.compareAtPrice ? (
+                        <p className="text-[11px] text-foreground/45 line-through sm:text-[12px]">
+                          {formatPrice(product.compareAtPrice)}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
                 </Link>
               </div>
             </div>

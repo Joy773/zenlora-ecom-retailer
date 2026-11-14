@@ -37,6 +37,7 @@ export type ProductFormValues = {
   subcategory?: string;
   isNewArrival?: boolean;
   isOffer?: boolean;
+  isBestSelling?: boolean;
 };
 
 type AddProductModalProps = {
@@ -110,6 +111,7 @@ export function AddProductModal({
   const [subcategory, setSubcategory] = useState("");
   const [isNewArrival, setIsNewArrival] = useState(false);
   const [isOffer, setIsOffer] = useState(false);
+  const [isBestSelling, setIsBestSelling] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -145,6 +147,7 @@ export function AddProductModal({
     setSubcategory("");
     setIsNewArrival(false);
     setIsOffer(false);
+    setIsBestSelling(false);
     setIsSaving(false);
     setFormError("");
   };
@@ -184,6 +187,7 @@ export function AddProductModal({
       setSubcategory(initialValues.subcategory ?? "");
       setIsNewArrival(Boolean(initialValues.isNewArrival));
       setIsOffer(Boolean(initialValues.isOffer));
+      setIsBestSelling(Boolean(initialValues.isBestSelling));
     } else {
       resetForm();
     }
@@ -282,6 +286,7 @@ export function AddProductModal({
     formData.set("subcategory", subcategory);
     formData.set("isNewArrival", String(isNewArrival));
     formData.set("isOffer", String(isOffer));
+    formData.set("isBestSelling", String(isBestSelling));
     sizes.forEach((size) => formData.append("sizes", size));
     formData.set("sizePrices", JSON.stringify(calculatedSizePrices));
     calculatedSizePrices.forEach((variant) => {
@@ -722,6 +727,16 @@ export function AddProductModal({
                   className="h-4 w-4 shrink-0 appearance-none rounded border border-foreground/20 checked:border-accent checked:bg-accent"
                 />
                 <span>Offer</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 text-[13px] text-foreground/70 transition-colors hover:text-foreground">
+                <input
+                  type="checkbox"
+                  name="bestSelling"
+                  checked={isBestSelling}
+                  onChange={(event) => setIsBestSelling(event.target.checked)}
+                  className="h-4 w-4 shrink-0 appearance-none rounded border border-foreground/20 checked:border-accent checked:bg-accent"
+                />
+                <span>Best Selling</span>
               </label>
             </div>
           </fieldset>
