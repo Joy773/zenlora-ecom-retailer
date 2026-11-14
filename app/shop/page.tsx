@@ -1,8 +1,11 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 type ShopPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+export const instant = false;
 
 const categoryAliases: Record<string, string> = {
   cleansers: "cleanser",
@@ -16,7 +19,7 @@ function firstValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-export default async function ShopPage({ searchParams }: ShopPageProps) {
+async function ShopRedirect({ searchParams }: ShopPageProps) {
   const params = await searchParams;
   const category = firstValue(params.category);
   const type = firstValue(params.type) || (category ? categoryAliases[category] : undefined);
@@ -39,4 +42,13 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
   const queryString = forwardedParams.toString();
   redirect(queryString ? `${destination}?${queryString}` : destination);
+  return null;
+}
+
+export default function ShopPage({ searchParams }: ShopPageProps) {
+  return (
+    <Suspense fallback={null}>
+      <ShopRedirect searchParams={searchParams} />
+    </Suspense>
+  );
 }
