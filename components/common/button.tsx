@@ -55,7 +55,7 @@ export function ShopNowButton() {
 
 export function ShopTheBrandButton() {
   return (
-    <Button href="/shop" variant="primary">
+    <Button href="/skincare" variant="primary">
       Shop the brand
     </Button>
   );

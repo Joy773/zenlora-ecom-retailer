@@ -23,6 +23,29 @@ type NavLink = {
   children?: { title: string; items: { href: string; label: string }[] }[];
 };
 
+function normalizeShopHref(href: string) {
+  const [path, query = ""] = href.split("?");
+  if (path !== "/shop") return href;
+
+  const params = new URLSearchParams(query);
+  const category = params.get("category");
+  const destination =
+    category === "makeup"
+      ? "/makeup"
+      : category === "haircare"
+        ? "/haircare"
+        : "/skincare";
+
+  params.delete("category");
+  if (params.get("sort") === "best-sellers") {
+    params.delete("sort");
+    params.set("flag", "best-selling");
+  }
+
+  const queryString = params.toString();
+  return queryString ? `${destination}?${queryString}` : destination;
+}
+
 const skincareMenu: NonNullable<NavLink["children"]> = [
   {
     title: "Face",
@@ -410,7 +433,7 @@ export default function Navbar() {
             <li key={link.label} className="relative group">
               {link.href ? (
                 <Link
-                  href={link.href}
+                  href={normalizeShopHref(link.href)}
                   className="whitespace-nowrap font-bold text-foreground/80 transition-colors hover:text-accent group-hover:text-accent"
                 >
                   {link.label}
@@ -439,7 +462,7 @@ export default function Navbar() {
                             {group.items.map((item) => (
                               <li key={item.href}>
                                 <Link
-                                  href={item.href}
+                                  href={normalizeShopHref(item.href)}
                                   className="text-[12px] leading-snug text-foreground/70 transition-colors hover:text-accent"
                                 >
                                   {item.label}
@@ -497,7 +520,7 @@ export default function Navbar() {
                       <div className="flex items-center justify-between gap-3">
                         {link.href ? (
                           <Link
-                            href={link.href}
+                            href={normalizeShopHref(link.href)}
                             onClick={closeMenu}
                             className="font-bold text-foreground/80 transition-colors hover:text-accent"
                           >
@@ -541,7 +564,7 @@ export default function Navbar() {
                                 {group.items.map((item) => (
                                   <li key={item.href}>
                                     <Link
-                                      href={item.href}
+                            href={normalizeShopHref(item.href)}
                                       onClick={closeMenu}
                                       className="block text-[13px] text-foreground/70 transition-colors hover:text-accent"
                                     >
@@ -557,7 +580,7 @@ export default function Navbar() {
                     </div>
                   ) : link.href ? (
                     <Link
-                      href={link.href}
+                      href={normalizeShopHref(link.href)}
                       onClick={closeMenu}
                       className="block font-bold text-foreground/80 transition-colors hover:text-accent"
                     >

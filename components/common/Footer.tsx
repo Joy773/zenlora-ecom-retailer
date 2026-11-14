@@ -7,16 +7,16 @@ const montserrat = Montserrat({
 });
 
 const shopLinks = [
-  { href: "/shop?category=skincare", label: "Skincare" },
-  { href: "/shop?category=makeup", label: "Makeup" },
-  { href: "/shop?category=haircare", label: "Haircare" },
-  { href: "/shop?category=bath-body", label: "Bath & Body" },
-  { href: "/shop?category=beauty-accessories", label: "Beauty Accessories" },
+  { href: "/skincare", label: "Skincare" },
+  { href: "/makeup", label: "Makeup" },
+  { href: "/haircare", label: "Haircare" },
+  { href: "/skincare", label: "Bath & Body" },
+  { href: "/makeup", label: "Beauty Accessories" },
 ];
 
 const discoverLinks = [
   { href: "/brands", label: "Brands" },
-  { href: "/shop?sort=best-sellers", label: "Best Sellers" },
+  { href: "/skincare?flag=best-selling", label: "Best Sellers" },
   { href: "/new-arrivals", label: "New Arrivals" },
   { href: "/offers", label: "Offers" },
 ];
@@ -25,7 +25,7 @@ const helpLinks = [
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
   { href: "/cart", label: "Cart" },
-  { href: "/shop", label: "Shop All" },
+  { href: "/skincare", label: "Shop All" },
   { href: "/privacy-policy", label: "Privacy & Policy" },
 ];
 
