@@ -30,6 +30,7 @@ function sizePrices(
         price: string;
         discountedPrice?: string;
         images?: string[];
+        inStock?: boolean;
       } =>
         Boolean(item) &&
         typeof item === "object" &&
@@ -43,6 +44,7 @@ function sizePrices(
     );
     return variants.map((variant) => ({
       ...variant,
+      inStock: typeof variant.inStock === "boolean" ? variant.inStock : flag(formData, "inStock"),
       discountPercent: getDiscountPercent(variant.price, variant.discountedPrice ?? ""),
       images: [
         ...(Array.isArray(variant.images) ? variant.images : []),
@@ -176,7 +178,7 @@ export async function POST(request: Request) {
       .map((value) => value.trim())
       .filter(Boolean),
     sizePrices: sizePrices(formData, sizeImages),
-    inStock: flag(formData, "inStock"),
+    inStock: submittedSizePrices.some((variant) => variant.inStock),
     brand: text(formData, "brand"),
     format: text(formData, "format"),
     aboutBrand: text(formData, "aboutBrand"),
@@ -273,7 +275,7 @@ export async function PATCH(request: Request) {
     .map((value) => value.trim())
     .filter(Boolean);
   product.set("sizePrices", sizePrices(formData, uploadedSizeImages));
-  product.inStock = flag(formData, "inStock");
+  product.inStock = submittedSizePrices.some((variant) => variant.inStock);
   product.brand = text(formData, "brand");
   product.format = text(formData, "format");
   product.aboutBrand = text(formData, "aboutBrand");
