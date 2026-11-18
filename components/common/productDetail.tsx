@@ -305,7 +305,11 @@ export default function ProductDetail({
           </div>
 
           <div className="mt-8 border-t border-foreground/10">
-            <div className="grid grid-cols-2 border-b border-foreground/10 sm:grid-cols-3 lg:grid-cols-6">
+            <div
+              role="tablist"
+              aria-label="Product information"
+              className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain border-b border-foreground/10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-3 sm:overflow-visible lg:grid-cols-6"
+            >
               {detailTabs.map((tab) => {
                 const isActive = tab.key === activeTab;
 
@@ -316,7 +320,7 @@ export default function ProductDetail({
                     onClick={() => setActiveTab(tab.key)}
                     aria-selected={isActive}
                     role="tab"
-                    className={`border-b-2 px-2 py-4 text-left text-[13px] font-semibold transition-colors sm:text-center ${
+                    className={`shrink-0 snap-start whitespace-nowrap border-b-2 px-4 py-4 text-left text-[13px] font-semibold transition-colors sm:px-2 sm:text-center sm:whitespace-normal ${
                       isActive
                         ? "border-accent text-accent"
                         : "border-transparent text-foreground/70 hover:text-foreground"
