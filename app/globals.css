@@ -24,6 +24,18 @@ body {
   color: #252525;
 }
 
+@layer components {
+  .product-card-title {
+    display: -webkit-box;
+    /* Match the clipping box to two actual lines; rem sizing exposed line three. */
+    height: 2lh;
+    max-height: 2lh;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+}
+
 /* react-toastify — Zenlora palette */
 :root {
   --toastify-color-light: #faf9f6;
