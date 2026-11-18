@@ -59,10 +59,10 @@ function sizePrices(
 export async function GET() {
   const session = await auth();
 
-  if (!session?.user) {
+  if (session?.user?.role !== "admin") {
     return NextResponse.json(
-      { error: "You must be signed in to view products." },
-      { status: 401 },
+      { error: "Admin access is required to view products." },
+      { status: 403 },
     );
   }
 
@@ -112,10 +112,10 @@ export async function GET() {
 export async function POST(request: Request) {
   const session = await auth();
 
-  if (!session?.user) {
+  if (session?.user?.role !== "admin") {
     return NextResponse.json(
-      { error: "You must be signed in to save a product." },
-      { status: 401 },
+      { error: "Admin access is required to save a product." },
+      { status: 403 },
     );
   }
 
@@ -196,10 +196,10 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   const session = await auth();
 
-  if (!session?.user) {
+  if (session?.user?.role !== "admin") {
     return NextResponse.json(
-      { error: "You must be signed in to update a product." },
-      { status: 401 },
+      { error: "Admin access is required to update a product." },
+      { status: 403 },
     );
   }
 
@@ -305,10 +305,10 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   const session = await auth();
 
-  if (!session?.user) {
+  if (session?.user?.role !== "admin") {
     return NextResponse.json(
-      { error: "You must be signed in to delete a product." },
-      { status: 401 },
+      { error: "Admin access is required to delete a product." },
+      { status: 403 },
     );
   }
 
