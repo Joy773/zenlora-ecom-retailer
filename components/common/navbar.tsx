@@ -3,15 +3,20 @@
 import { Montserrat } from "next/font/google";
 import Link from "next/link";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import {
+  HiOutlineArrowRightOnRectangle,
   HiOutlineBars3,
   HiOutlineChevronDown,
   HiOutlineMagnifyingGlass,
   HiOutlineShoppingBag,
+  HiOutlineUser,
   HiOutlineXMark,
 } from "react-icons/hi2";
 import { useCart } from "@/context/cart-context";
+import { logoutCustomer } from "@/lib/customer-auth";
 import { ShopNowButton } from "./button";
+import LoginSignupModal from "./login&signup-modal";
 import Searchbar from "./searchbar";
 
 const montserrat = Montserrat({
@@ -411,8 +416,10 @@ function CartIcon({ onClick }: { onClick?: () => void }) {
 }
 
 export default function Navbar() {
+  const { status: sessionStatus } = useSession();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [expandedMobile, setExpandedMobile] = useState<string | null>(null);
 
   const closeMenu = () => {
@@ -484,6 +491,30 @@ export default function Navbar() {
         </ul>
 
         <div className="hidden shrink-0 items-center gap-3 lg:flex">
+          {sessionStatus === "authenticated" ? (
+            <form action={logoutCustomer}>
+              <button
+                type="submit"
+                aria-label="Log out"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-foreground transition-all duration-200 hover:border-primary hover:bg-primary/50 hover:text-accent"
+              >
+                <HiOutlineArrowRightOnRectangle className="h-5 w-5" />
+              </button>
+            </form>
+          ) : sessionStatus === "unauthenticated" ? (
+            <button
+              type="button"
+              onClick={() => setAccountOpen(true)}
+              aria-label="Open login and sign-up"
+              aria-haspopup="dialog"
+              aria-expanded={accountOpen}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-foreground transition-all duration-200 hover:border-primary hover:bg-primary/50 hover:text-accent"
+            >
+              <HiOutlineUser className="h-5 w-5" />
+            </button>
+          ) : (
+            <span className="h-10 w-10" aria-hidden />
+          )}
           <button
             type="button"
             onClick={() => setSearchOpen((value) => !value)}
@@ -627,6 +658,11 @@ export default function Navbar() {
           </div>
         </div>
       ) : null}
+
+      <LoginSignupModal
+        open={accountOpen}
+        onClose={() => setAccountOpen(false)}
+      />
     </header>
   );
 }
