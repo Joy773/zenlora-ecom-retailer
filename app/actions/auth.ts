@@ -48,7 +48,7 @@ export async function changePasswordAction(
 ): Promise<AuthActionState> {
   const session = await auth();
 
-  if (!session?.user?.email) {
+  if (session?.user?.role !== "admin" || !session.user.email) {
     return { error: "You must be signed in to change your password." };
   }
 
