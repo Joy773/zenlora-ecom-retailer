@@ -78,7 +78,7 @@ function ProductCard({
       </div>
       <div className="mt-2">
         <Link href={productHref}>
-          <p className="line-clamp-2 min-h-[2.5rem] text-[13px] leading-tight text-foreground transition-colors hover:text-accent">
+          <p className="product-card-title text-[13px] leading-tight text-foreground transition-colors hover:text-accent">
             {product.name}
           </p>
           <p className="text-[14px] font-semibold leading-tight text-foreground">{formatPrice(product.price)}</p>
