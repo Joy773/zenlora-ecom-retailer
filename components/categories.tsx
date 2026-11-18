@@ -1,9 +1,5 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi2";
 
 const categories = [
   {
@@ -45,24 +41,6 @@ const categories = [
 ];
 
 export default function Categories() {
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(2);
-
-  useEffect(() => {
-    const media = window.matchMedia("(min-width: 768px)");
-    const syncPageSize = () => setPageSize(media.matches ? 3 : 2);
-
-    syncPageSize();
-    media.addEventListener("change", syncPageSize);
-    return () => media.removeEventListener("change", syncPageSize);
-  }, []);
-
-  const pageCount = Math.ceil(categories.length / pageSize);
-
-  useEffect(() => {
-    setPage((current) => Math.min(current, Math.max(pageCount - 1, 0)));
-  }, [pageCount]);
-
   return (
     <section className="bg-white px-8 pt-16 pb-6 md:px-16 md:pb-16 lg:px-20 lg:py-20">
       <div className="flex flex-col items-center text-center">
@@ -88,17 +66,15 @@ export default function Categories() {
       </div>
 
       <div className="mt-10">
-        <div className="overflow-hidden">
+        <div className="overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <ul
-            className="flex gap-3 transition-transform duration-500 ease-out md:gap-8 lg:gap-10 [--category-gap:0.75rem] md:[--category-gap:2rem] lg:[--category-gap:2.5rem]"
-            style={{
-              transform: `translateX(calc(-${page} * (100% + var(--category-gap))))`,
-            }}
+            aria-label="Product categories"
+            className="flex snap-x snap-mandatory gap-3 md:gap-8 lg:gap-10 [--category-gap:0.75rem] md:[--category-gap:2rem] lg:[--category-gap:2.5rem]"
           >
             {categories.map((category) => (
               <li
                 key={category.name}
-                className="w-[calc((100%-var(--category-gap))/2)] shrink-0 md:w-[calc((100%-2*var(--category-gap))/3)]"
+                className="w-full shrink-0 snap-start md:w-[calc((100%-2*var(--category-gap))/3)]"
               >
                 <Link href={category.href} className="group block">
                   <div className="relative aspect-square overflow-hidden bg-[#f2f2f0]">
@@ -117,27 +93,6 @@ export default function Categories() {
               </li>
             ))}
           </ul>
-        </div>
-
-        <div className="mt-5 flex items-center justify-center gap-3 md:mt-8">
-          <button
-            type="button"
-            onClick={() =>
-              setPage((current) => (current - 1 + pageCount) % pageCount)
-            }
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f2f2f0] text-foreground transition-colors hover:bg-primary"
-            aria-label="Previous categories"
-          >
-            <HiOutlineChevronLeft className="h-6 w-6" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setPage((current) => (current + 1) % pageCount)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f2f2f0] text-foreground transition-colors hover:bg-primary"
-            aria-label="Next categories"
-          >
-            <HiOutlineChevronRight className="h-6 w-6" />
-          </button>
         </div>
       </div>
     </section>
