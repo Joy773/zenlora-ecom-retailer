@@ -49,7 +49,7 @@ export default function RelatedProducts({ products }: { products: StoreProduct[]
               />
             </div>
             <Link href={product.href} className="mt-2 block">
-              <p className="line-clamp-2 min-h-10 text-[13px] leading-tight text-foreground transition-colors hover:text-accent">
+              <p className="product-card-title text-[13px] leading-tight text-foreground transition-colors hover:text-accent">
                 {product.name}
               </p>
               <p className="text-[14px] font-semibold leading-tight text-foreground">{formatPrice(product.price)}</p>
