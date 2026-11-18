@@ -133,6 +133,76 @@ export default function CartView() {
           <p className="mt-2 text-[12px] leading-relaxed text-foreground/55">
             Shipping and taxes calculated at checkout.
           </p>
+
+          <div className="mt-6 border-t border-primary pt-5">
+            <h3 className="text-[12px] font-bold tracking-[0.12em] text-foreground uppercase">
+              Delivery details
+            </h3>
+            <div className="mt-4 flex flex-col gap-3">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-medium text-foreground/65">
+                  Full Name
+                </span>
+                <input
+                  type="text"
+                  name="fullName"
+                  autoComplete="name"
+                  placeholder="Your full name"
+                  className="rounded-lg border border-primary bg-white px-3 py-2 text-[12px] text-foreground outline-none transition-colors placeholder:text-foreground/35 focus:border-accent"
+                />
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-medium text-foreground/65">
+                  Contact
+                </span>
+                <input
+                  type="tel"
+                  name="contact"
+                  autoComplete="tel"
+                  placeholder="Phone number"
+                  className="rounded-lg border border-primary bg-white px-3 py-2 text-[12px] text-foreground outline-none transition-colors placeholder:text-foreground/35 focus:border-accent"
+                />
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-medium text-foreground/65">
+                  Address
+                </span>
+                <textarea
+                  name="address"
+                  autoComplete="street-address"
+                  rows={2}
+                  placeholder="House, road, area"
+                  className="resize-none rounded-lg border border-primary bg-white px-3 py-2 text-[12px] text-foreground outline-none transition-colors placeholder:text-foreground/35 focus:border-accent"
+                />
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex min-w-0 flex-col gap-1.5">
+                  <span className="text-[11px] font-medium text-foreground/65">
+                    City
+                  </span>
+                  <input
+                    type="text"
+                    name="city"
+                    autoComplete="address-level2"
+                    placeholder="City"
+                    className="min-w-0 rounded-lg border border-primary bg-white px-3 py-2 text-[12px] text-foreground outline-none transition-colors placeholder:text-foreground/35 focus:border-accent"
+                  />
+                </label>
+                <label className="flex min-w-0 flex-col gap-1.5">
+                  <span className="text-[11px] font-medium text-foreground/65">
+                    ZIP Code
+                  </span>
+                  <input
+                    type="text"
+                    name="zipCode"
+                    autoComplete="postal-code"
+                    placeholder="ZIP code"
+                    className="min-w-0 rounded-lg border border-primary bg-white px-3 py-2 text-[12px] text-foreground outline-none transition-colors placeholder:text-foreground/35 focus:border-accent"
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
           <Button variant="accent" className="mt-6 w-full rounded-full">
             Checkout
           </Button>
