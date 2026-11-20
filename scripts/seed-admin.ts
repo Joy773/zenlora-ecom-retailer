@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
-import { MongoClient } from "mongodb";
+import mongoose from "mongoose";
+import { AdminUser } from "../models/AdminUser";
 
 const uri = process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017";
 const dbName = process.env.MONGODB_DB ?? "zenlora";
@@ -8,19 +9,13 @@ const password = process.env.ADMIN_PASSWORD ?? "ZenloraAdmin1!";
 const name = process.env.ADMIN_NAME ?? "Zenlora Admin";
 
 async function seedAdmin() {
-  const client = new MongoClient(uri);
-
   try {
-    await client.connect();
-    const db = client.db(dbName);
-    const users = db.collection("users");
-
-    await users.createIndex({ email: 1 }, { unique: true });
+    await mongoose.connect(uri, { dbName });
+    await AdminUser.createIndexes();
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const now = new Date();
 
-    await users.updateOne(
+    await AdminUser.updateOne(
       { email },
       {
         $set: {
@@ -28,10 +23,6 @@ async function seedAdmin() {
           password: passwordHash,
           name,
           role: "admin",
-          updatedAt: now,
-        },
-        $setOnInsert: {
-          createdAt: now,
         },
       },
       { upsert: true },
@@ -39,7 +30,7 @@ async function seedAdmin() {
 
     console.log(`Admin user ready: ${email}`);
   } finally {
-    await client.close();
+    await mongoose.disconnect();
   }
 }
 
