@@ -1,3 +1,6 @@
+import { invalidateCatalogProduct } from "@/lib/catalog-cache";
+import { productSearchFilter, searchIndex } from "@/lib/product-search";
+import { pageWindow } from "@/lib/pagination";
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 import { auth } from "@/admin-auth";
@@ -56,7 +59,7 @@ function sizePrices(
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await auth();
 
   if (session?.user?.role !== "admin") {
@@ -68,9 +71,30 @@ export async function GET() {
 
   await connectMongoose();
 
-  const products = await Product.find().sort({ createdAt: -1 }).lean();
+  const params = new URL(request.url).searchParams;
+  const filter: Record<string, unknown> = {};
+  const category = params.get("category");
+  const type = params.get("type");
+  const concern = params.get("concern");
+  if (category) filter.category = category;
+  if (type) filter.subcategory = `type:${type}`;
+  else if (concern) filter.subcategory = `concern:${concern}`;
+
+  const search = params.get("q")?.trim();
+  if (search) Object.assign(filter, productSearchFilter(search, true));
+
+  const size = 20;
+  const count = Product.countDocuments(filter);
+  const query = Product.find(filter).sort({ createdAt: -1, _id: -1 });
+  if (search) {
+    count.hint(searchIndex);
+    query.hint(searchIndex);
+  }
+  const { currentPage, totalPages, offset } = pageWindow(await count, size, params.get("page"));
+  const products = await query.skip(offset).limit(size).lean();
 
   return NextResponse.json({
+    currentPage, totalPages,
     products: products.map((product) => ({
       id: String(product._id),
       name: product.name,
@@ -190,6 +214,7 @@ export async function POST(request: Request) {
     isBestSelling: flag(formData, "isBestSelling"),
   });
 
+  invalidateCatalogProduct(String(product._id));
   return NextResponse.json({ id: product._id.toString() });
 }
 
@@ -287,6 +312,7 @@ export async function PATCH(request: Request) {
   product.isBestSelling = flag(formData, "isBestSelling");
 
   await product.save();
+  invalidateCatalogProduct(String(product._id));
   await Product.updateOne(
     { _id: product._id },
     {
@@ -330,5 +356,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Product was not found." }, { status: 404 });
   }
 
+  invalidateCatalogProduct(id.toLowerCase());
   return NextResponse.json({ id });
 }
