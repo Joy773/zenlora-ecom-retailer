@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { HiOutlineTrash } from "react-icons/hi2";
 import { formatCartMoney, useCart } from "@/context/cart-context";
+import { getDeliveryFee } from "@/lib/delivery";
 import { formatPrice } from "@/lib/format-price";
 import Button from "./button";
 import { QuantityStepper } from "./productCartActions";
@@ -18,6 +20,8 @@ export default function CartView() {
     removeItem,
     clearCart,
   } = useCart();
+  const [city, setCity] = useState("");
+  const deliveryFee = getDeliveryFee(city);
 
   if (!isHydrated) {
     return (
@@ -130,9 +134,24 @@ export default function CartView() {
             <span>Subtotal</span>
             <span className="font-medium">{formatCartMoney(subtotal)}</span>
           </div>
-          <p className="mt-2 text-[12px] leading-relaxed text-foreground/55">
-            Shipping and taxes calculated at checkout.
-          </p>
+          <div aria-live="polite" aria-atomic="true" className="mt-2">
+            {deliveryFee === null ? (
+              <p className="text-[12px] leading-relaxed text-foreground/55">
+                Enter your city to see the delivery charge.
+              </p>
+            ) : (
+              <>
+                <div className="flex items-baseline justify-between gap-3 text-[14px]">
+                  <span className="min-w-0 break-words">Delivery to {city.trim()}</span>
+                  <span>{formatCartMoney(deliveryFee)}</span>
+                </div>
+                <div className="mt-3 flex justify-between border-t border-primary pt-3 text-[14px] font-semibold">
+                  <span>Total</span>
+                  <span>{formatCartMoney(subtotal + deliveryFee)}</span>
+                </div>
+              </>
+            )}
+          </div>
 
           <div className="mt-6 border-t border-primary pt-5">
             <h3 className="text-[12px] font-bold tracking-[0.12em] text-foreground uppercase">
@@ -183,6 +202,8 @@ export default function CartView() {
                   <input
                     type="text"
                     name="city"
+                    value={city}
+                    onChange={(event) => setCity(event.currentTarget.value)}
                     autoComplete="address-level2"
                     placeholder="City"
                     className="min-w-0 rounded-lg border border-primary bg-white px-3 py-2 text-[12px] text-foreground outline-none transition-colors placeholder:text-foreground/35 focus:border-accent"
