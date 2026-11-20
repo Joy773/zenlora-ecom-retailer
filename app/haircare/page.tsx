@@ -7,7 +7,7 @@ import Category, {
 } from "@/components/common/category";
 import HaircareProductGrid from "@/components/common/haircareProductGrid";
 import Searchbar from "@/components/common/searchbar";
-import { getStoreProducts } from "@/lib/store-products";
+import { getStoreProductPage } from "@/lib/store-products";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -20,7 +20,7 @@ function valueOf(value: string | string[] | undefined) {
 async function HaircarePageContent({ searchParams }: PageProps) {
   const params = await searchParams;
   const flag = valueOf(params.flag);
-  const products = await getStoreProducts({
+  const page = await getStoreProductPage({
     category: "haircare",
     type: valueOf(params.type),
     concern: valueOf(params.concern),
@@ -29,7 +29,7 @@ async function HaircarePageContent({ searchParams }: PageProps) {
     isNewArrival: flag === "new" ? true : undefined,
     isOffer: flag === "offer" ? true : undefined,
     isBestSelling: flag === "best-selling" ? true : undefined,
-  });
+  }, valueOf(params.page));
 
   return (
     <HaircareProducts
@@ -42,7 +42,7 @@ async function HaircarePageContent({ searchParams }: PageProps) {
         />
       }
     >
-      <HaircareProductGrid products={products} />
+      <HaircareProductGrid {...page} />
     </HaircareProducts>
   );
 }
