@@ -1,15 +1,13 @@
 "use client";
 
 import { useActionState, useEffect, useId, useRef, useState } from "react";
-import { toast } from "react-toastify";
 import { HiOutlineXMark } from "react-icons/hi2";
 import {
-  loginCustomer,
-  registerCustomer,
+  customerAuth,
   type CustomerAuthState,
 } from "@/lib/customer-auth";
 
-type AccountView = "login" | "signup";
+type AccountView = "login" | "signup" | "verify";
 
 type LoginSignupModalProps = {
   open: boolean;
@@ -26,30 +24,27 @@ export default function LoginSignupModal({
   onClose,
 }: LoginSignupModalProps) {
   const [view, setView] = useState<AccountView>("login");
-  const [loginState, loginFormAction, isLoginPending] = useActionState(
-    loginCustomer,
-    initialAuthState,
-  );
-  const [signupState, signupFormAction, isSignupPending] = useActionState(
-    registerCustomer,
+  const [authState, authFormAction, isAuthPending] = useActionState(
+    customerAuth,
     initialAuthState,
   );
   const titleId = useId();
   const firstInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (loginState.error) {
-      toast.error(loginState.error);
+    if (authState.verificationRequired) {
+      // The completed server action advances the modal's local state machine.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setView("verify");
+    } else if (authState.verified) {
+      setView("login");
     }
-  }, [loginState]);
+  }, [authState]);
 
   useEffect(() => {
     if (!open) return;
 
     const previouslyFocused = document.activeElement as HTMLElement | null;
-    const focusFrame = window.requestAnimationFrame(() => {
-      firstInputRef.current?.focus();
-    });
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
@@ -58,19 +53,39 @@ export default function LoginSignupModal({
     document.body.style.overflow = "hidden";
 
     return () => {
-      window.cancelAnimationFrame(focusFrame);
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "";
       previouslyFocused?.focus();
     };
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      firstInputRef.current?.focus();
+    });
+
+    return () => window.cancelAnimationFrame(focusFrame);
+  }, [open, view]);
+
   if (!open) return null;
 
   const switchView = (nextView: AccountView) => {
     setView(nextView);
-    window.requestAnimationFrame(() => firstInputRef.current?.focus());
   };
+
+  const activeView = view;
+  const verificationEmail = authState.verificationEmail ?? "";
+  const verificationChallengeId = authState.verificationChallengeId ?? "";
+  const loginEmail = verificationEmail;
+
+  const title =
+    activeView === "login"
+      ? "Welcome back"
+      : activeView === "signup"
+        ? "Create an account"
+        : "Verify your email";
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 py-6">
@@ -96,7 +111,7 @@ export default function LoginSignupModal({
               id={titleId}
               className="mt-2 font-serif text-3xl font-normal italic leading-none text-foreground sm:text-4xl"
             >
-              {view === "login" ? "Welcome back" : "Create an account"}
+              {title}
             </h2>
           </div>
           <button
@@ -109,43 +124,53 @@ export default function LoginSignupModal({
           </button>
         </div>
 
-        <div
-          role="tablist"
-          aria-label="Account options"
-          className="mt-7 grid grid-cols-2 border-b border-primary"
-        >
-          {(["login", "signup"] as const).map((option) => {
-            const selected = view === option;
-            return (
-              <button
-                key={option}
-                type="button"
-                role="tab"
-                aria-selected={selected}
-                onClick={() => switchView(option)}
-                className={`border-b-2 px-3 py-3 text-sm font-semibold transition-colors ${
-                  selected
-                    ? "border-accent text-accent"
-                    : "border-transparent text-foreground/55 hover:text-foreground"
-                }`}
-              >
-                {option === "login" ? "Log in" : "Sign up"}
-              </button>
-            );
-          })}
-        </div>
+        {activeView !== "verify" ? (
+          <div
+            role="tablist"
+            aria-label="Account options"
+            className="mt-7 grid grid-cols-2 border-b border-primary"
+          >
+            {(["login", "signup"] as const).map((option) => {
+              const selected = activeView === option;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  onClick={() => switchView(option)}
+                  className={`border-b-2 px-3 py-3 text-sm font-semibold transition-colors ${
+                    selected
+                      ? "border-accent text-accent"
+                      : "border-transparent text-foreground/55 hover:text-foreground"
+                  }`}
+                >
+                  {option === "login" ? "Log in" : "Sign up"}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
 
-        {view === "login" ? (
-          <form action={loginFormAction} className="mt-7 flex flex-col gap-5">
+        {activeView === "login" ? (
+          <form action={authFormAction} className="mt-7 flex flex-col gap-5">
+            <input type="hidden" name="intent" value="login" />
+            {authState.verified && authState.success ? (
+              <p className="text-xs text-emerald-700" role="status">
+                {authState.success}
+              </p>
+            ) : null}
             <label className="flex flex-col gap-2">
               <span className="text-xs font-medium text-foreground/70">
                 Email address
               </span>
               <input
+                key={loginEmail}
                 ref={firstInputRef}
                 type="email"
                 name="email"
                 autoComplete="email"
+                defaultValue={loginEmail}
                 required
                 className={inputClassName}
                 placeholder="you@example.com"
@@ -164,12 +189,17 @@ export default function LoginSignupModal({
                 placeholder="Enter your password"
               />
             </label>
+            {authState.action === "login" && authState.error ? (
+              <p className="text-xs text-red-600" role="alert">
+                {authState.error}
+              </p>
+            ) : null}
             <button
               type="submit"
-              disabled={isLoginPending}
-              className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent/90"
+              disabled={isAuthPending}
+              className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isLoginPending ? "Logging in..." : "Log in"}
+              {isAuthPending ? "Logging in..." : "Log in"}
             </button>
             <p className="text-center text-xs text-foreground/55">
               New to Zenlora?{" "}
@@ -182,8 +212,9 @@ export default function LoginSignupModal({
               </button>
             </p>
           </form>
-        ) : (
-          <form action={signupFormAction} className="mt-7 flex flex-col gap-5">
+        ) : activeView === "signup" ? (
+          <form action={authFormAction} className="mt-7 flex flex-col gap-5">
+            <input type="hidden" name="intent" value="register" />
             <label className="flex flex-col gap-2">
               <span className="text-xs font-medium text-foreground/70">
                 Full name
@@ -239,22 +270,17 @@ export default function LoginSignupModal({
                 placeholder="Enter your password again"
               />
             </label>
-            {signupState.error ? (
+            {authState.action === "register" && authState.error ? (
               <p className="text-xs text-red-600" role="alert">
-                {signupState.error}
-              </p>
-            ) : null}
-            {signupState.success ? (
-              <p className="text-xs text-emerald-700" role="status">
-                {signupState.success}
+                {authState.error}
               </p>
             ) : null}
             <button
               type="submit"
-              disabled={isSignupPending}
-              className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent/90"
+              disabled={isAuthPending}
+              className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSignupPending ? "Creating account..." : "Create account"}
+              {isAuthPending ? "Creating account..." : "Create account"}
             </button>
             <p className="text-center text-xs text-foreground/55">
               Already have an account?{" "}
@@ -267,6 +293,84 @@ export default function LoginSignupModal({
               </button>
             </p>
           </form>
+        ) : (
+          <div className="mt-7 flex flex-col gap-5">
+            <p className="text-sm text-foreground/70">
+              Enter the six-digit code sent to{" "}
+              <span className="font-semibold text-foreground">
+                {verificationEmail}
+              </span>
+              .
+            </p>
+            <form action={authFormAction} className="flex flex-col gap-5">
+              <input type="hidden" name="intent" value="verify" />
+              <input type="hidden" name="email" value={verificationEmail} />
+              <input
+                type="hidden"
+                name="challengeId"
+                value={verificationChallengeId}
+              />
+              <label className="flex flex-col gap-2">
+                <span className="text-xs font-medium text-foreground/70">
+                  Verification code
+                </span>
+                <input
+                  ref={firstInputRef}
+                  type="text"
+                  name="code"
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  required
+                  className={`${inputClassName} text-center text-xl font-semibold tracking-[0.35em]`}
+                  placeholder="000000"
+                  onInput={(event) => {
+                    event.currentTarget.value = event.currentTarget.value
+                      .replace(/\D/g, "")
+                      .slice(0, 6);
+                  }}
+                />
+              </label>
+              {authState.error || authState.success ? (
+                <p
+                  className={`text-xs ${
+                    authState.error
+                      ? "text-red-600"
+                      : "text-emerald-700"
+                  }`}
+                  role={authState.error ? "alert" : "status"}
+                >
+                  {authState.error ?? authState.success}
+                </p>
+              ) : null}
+              <button
+                type="submit"
+                disabled={isAuthPending}
+                className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isAuthPending ? "Verifying..." : "Verify email"}
+              </button>
+            </form>
+            <form action={authFormAction} className="text-center">
+              <input type="hidden" name="intent" value="resend" />
+              <input type="hidden" name="email" value={verificationEmail} />
+              <button
+                type="submit"
+                disabled={isAuthPending}
+                className="text-xs font-semibold text-accent hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isAuthPending ? "Sending..." : "Resend code"}
+              </button>
+            </form>
+            <button
+              type="button"
+              onClick={() => switchView("login")}
+              className="text-center text-xs text-foreground/55 hover:text-foreground"
+            >
+              Back to login
+            </button>
+          </div>
         )}
       </div>
     </div>
