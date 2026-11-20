@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import AddProductAction from "@/components/AddProductModal";
+import AddProductAction from "@/components/add-product-action";
 import AdminCategory from "@/components/admin-category";
 import AdminProductsList from "@/components/admin-products-list";
 import AdminSearchbar from "@/components/admin-searchbar";
