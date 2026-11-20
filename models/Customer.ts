@@ -1,5 +1,16 @@
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
+const emailVerificationSchema = new Schema(
+  {
+    challengeId: { type: String, required: true },
+    digest: { type: String, required: true, select: false },
+    expiresAt: { type: Date, required: true },
+    attemptsRemaining: { type: Number, required: true, min: 0 },
+    lastSentAt: { type: Date, required: true },
+  },
+  { _id: false },
+);
+
 const customerSchema = new Schema(
   {
     fullName: {
@@ -24,6 +35,10 @@ const customerSchema = new Schema(
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    emailVerification: {
+      type: emailVerificationSchema,
+      default: undefined,
     },
   },
   {
