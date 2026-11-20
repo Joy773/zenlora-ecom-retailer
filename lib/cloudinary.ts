@@ -24,7 +24,7 @@ export async function uploadProductImage(file: File) {
 
   const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
     const stream = client.uploader.upload_stream(
-      { folder: "zenlora/products", resource_type: "image" },
+      { folder: "zenlora/products", resource_type: "image", format: "webp" },
       (error, uploaded) => {
         if (error || !uploaded) {
           reject(error ?? new Error("Image upload failed"));
