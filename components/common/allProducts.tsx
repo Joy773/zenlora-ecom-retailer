@@ -14,7 +14,6 @@ export type Product = Pick<
   | "image"
   | "alt"
   | "slug"
-  | "description"
   | "isNewArrival"
   | "isOffer"
 >;
