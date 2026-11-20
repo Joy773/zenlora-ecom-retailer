@@ -24,6 +24,9 @@ export async function connectMongoose() {
   if (!cache.promise) {
     cache.promise = mongoose.connect(uri!, {
       dbName: process.env.MONGODB_DB || "zenlora",
+    }).catch((error) => {
+      cache.promise = null;
+      throw error;
     });
   }
 
