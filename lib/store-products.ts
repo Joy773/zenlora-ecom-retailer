@@ -1,3 +1,7 @@
+import { cacheLife, cacheTag } from "next/cache";
+import { catalogListingsTag, productTag } from "@/lib/catalog-cache";
+import { productSearchFilter, searchIndex } from "@/lib/product-search";
+import { pageWindow } from "@/lib/pagination";
 import mongoose from "mongoose";
 import { connectMongoose } from "@/lib/mongoose";
 import { getDiscountPercent, Product } from "@/models/Product";
@@ -91,37 +95,18 @@ type ProductRecord = {
   isBestSelling?: boolean;
 };
 
-function escapeRegex(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 function firstValue(value: string | undefined) {
   return value?.trim() ?? "";
 }
 
-function numericPrice(value: string) {
-  const amount = Number(value.replace(/[^0-9.]/g, ""));
-  return Number.isFinite(amount) ? amount : null;
-}
-
-function matchesPriceFilter(price: number, filter: string) {
-  switch (filter) {
-    case "under-500":
-      return price < 500;
-    case "500-1000":
-      return price >= 500 && price < 1000;
-    case "1000-1500":
-      return price >= 1000 && price < 1500;
-    case "1500-2000":
-      return price >= 1500 && price < 2000;
-    case "2000-3000":
-      return price >= 2000 && price <= 3000;
-    case "over-3000":
-      return price > 3000;
-    default:
-      return false;
-  }
-}
+const priceBands: Record<string, Record<string, number>> = {
+  "under-500": { $lt: 500 },
+  "500-1000": { $gte: 500, $lt: 1000 },
+  "1000-1500": { $gte: 1000, $lt: 1500 },
+  "1500-2000": { $gte: 1500, $lt: 2000 },
+  "2000-3000": { $gte: 2000, $lte: 3000 },
+  "over-3000": { $gt: 3000 },
+};
 
 function mapProduct(product: ProductRecord): StoreProduct {
   const variants: StoreProductVariant[] = (product.sizePrices ?? []).map(
@@ -177,11 +162,7 @@ function mapProduct(product: ProductRecord): StoreProduct {
   };
 }
 
-export async function getStoreProducts(
-  options: StoreProductOptions = {},
-): Promise<StoreProduct[]> {
-  await connectMongoose();
-
+function productFilter(options: StoreProductOptions) {
   const filter: Record<string, unknown> = {};
 
   if (options.category) filter.category = options.category;
@@ -204,36 +185,120 @@ export async function getStoreProducts(
   }
 
   const search = options.search?.trim();
-  if (search) {
-    const expression = new RegExp(escapeRegex(search), "i");
-    filter.$or = [
-      { name: expression },
-      { brand: expression },
-      { description: expression },
-    ];
+  if (search) Object.assign(filter, productSearchFilter(search));
+
+  if (options.price?.length) {
+    const ranges = options.price.filter((band) => Object.hasOwn(priceBands, band))
+      .map((band) => ({ listingPrice: priceBands[band] }));
+    if (ranges.length) filter.$and = [{ $or: ranges }];
+    else filter._id = { $in: [] };
   }
+  return filter;
+}
 
-  const query = Product.find(filter).sort({ createdAt: -1 });
-  if (options.limit) query.limit(options.limit);
+type CardRecord = Pick<ProductRecord, "_id" | "name" | "seoSlug" | "isNewArrival" | "isOffer"> & {
+  variant?: { price?: string; discountedPrice?: string };
+  image?: string;
+};
 
-  const products = (await query.lean()) as unknown as ProductRecord[];
-  const mappedProducts = products.map(mapProduct);
+function cardQuery(filter: Record<string, unknown>) {
+  const query = Product.find(filter, {
+    name: 1, seoSlug: 1, isNewArrival: 1, isOffer: 1,
+    variant: {
+      $let: {
+        vars: { first: { $arrayElemAt: ["$sizePrices", 0] } },
+        in: { price: "$$first.price", discountedPrice: "$$first.discountedPrice" },
+      },
+    },
+    image: {
+      $reduce: {
+        input: "$sizePrices",
+        initialValue: "",
+        in: {
+          $cond: [
+            { $ne: ["$$value", ""] }, "$$value",
+            { $ifNull: [{ $arrayElemAt: [{
+              $filter: { input: "$$this.images", as: "src", cond: { $gt: ["$$src", ""] } },
+            }, 0] }, ""] },
+          ],
+        },
+      },
+    },
+  }).sort({ createdAt: -1, _id: -1 }).lean<CardRecord[]>();
+  return filter.searchGrams ? query.hint(searchIndex) : query;
+}
 
-  const priceFilters = options.price;
-  if (!priceFilters?.length) return mappedProducts;
+function mapCard(product: CardRecord) {
+  const id = product._id.toString();
+  const slug = firstValue(product.seoSlug) || id;
+  const price = firstValue(product.variant?.price);
+  const sale = firstValue(product.variant?.discountedPrice);
+  return {
+    id, slug, name: product.name, alt: product.name,
+    href: `/product/${encodeURIComponent(slug)}`,
+    price: sale || price,
+    compareAtPrice: sale ? price : undefined,
+    discount: getDiscountPercent(price, sale),
+    image: product.image ?? "",
+    isNewArrival: Boolean(product.isNewArrival),
+    isOffer: Boolean(product.isOffer),
+  };
+}
 
-  return mappedProducts.filter((product) => {
-    const price = numericPrice(product.price);
-    return (
-      price !== null &&
-      priceFilters.some((filter) => matchesPriceFilter(price, filter))
-    );
-  });
+export type StoreProductCard = ReturnType<typeof mapCard>;
+
+type LimitedProductOptions = StoreProductOptions & { limit: number };
+
+async function readStoreProducts(options: LimitedProductOptions) {
+  await connectMongoose();
+  return (await cardQuery(productFilter(options)).limit(options.limit)).map(mapCard);
+}
+
+async function cachedStoreProducts(options: LimitedProductOptions) {
+  "use cache: remote";
+  cacheLife("minutes");
+  cacheTag(catalogListingsTag);
+  return readStoreProducts(options);
+}
+
+export function getStoreProducts(options: LimitedProductOptions) {
+  return options.search?.trim() ? readStoreProducts(options) : cachedStoreProducts(options);
+}
+
+async function readStoreProductPage(options: StoreProductOptions, page?: string) {
+  await connectMongoose();
+  const filter = productFilter(options);
+  const size = 9;
+  const count = Product.countDocuments(filter);
+  if (filter.searchGrams) count.hint(searchIndex);
+  const { currentPage, totalPages, offset } = pageWindow(await count, size, page);
+  const products = await cardQuery(filter).skip(offset).limit(size);
+  return { products: products.map(mapCard), currentPage, totalPages };
+}
+
+async function cachedStoreProductPage(options: StoreProductOptions, page: string) {
+  "use cache: remote";
+  cacheLife("minutes");
+  cacheTag(catalogListingsTag);
+  return readStoreProductPage(options, page);
+}
+
+export function getStoreProductPage(options: StoreProductOptions, page?: string) {
+  if (options.search?.trim()) return readStoreProductPage(options, page);
+  const requested = Number(page);
+  const normalizedPage = Number.isSafeInteger(requested) && requested > 0 ? requested : 1;
+  return cachedStoreProductPage({
+    ...options,
+    search: undefined,
+    price: options.price?.length ? [...new Set(options.price)].sort() : undefined,
+  }, String(normalizedPage));
 }
 
 export async function getStoreProductBySlug(
   slug: string,
 ): Promise<StoreProduct | null> {
+  "use cache: remote";
+  cacheLife("minutes");
   await connectMongoose();
 
   const normalizedSlug = decodeURIComponent(slug).trim();
@@ -243,5 +308,7 @@ export async function getStoreProductBySlug(
       }).lean()
     : await Product.findOne({ seoSlug: normalizedSlug }).lean();
 
+  // A later create or rename can turn a cached miss into a valid product.
+  cacheTag(product ? productTag(String(product._id)) : catalogListingsTag);
   return product ? mapProduct(product as unknown as ProductRecord) : null;
 }
