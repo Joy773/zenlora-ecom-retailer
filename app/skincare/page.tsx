@@ -5,7 +5,7 @@ import Category, {
 } from "@/components/common/category";
 import Searchbar from "@/components/common/searchbar";
 import SkincareProductGrid from "@/components/common/skincareProductGrid";
-import { getStoreProducts } from "@/lib/store-products";
+import { getStoreProductPage } from "@/lib/store-products";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -18,7 +18,7 @@ function valueOf(value: string | string[] | undefined) {
 async function SkincarePageContent({ searchParams }: PageProps) {
   const params = await searchParams;
   const flag = valueOf(params.flag);
-  const products = await getStoreProducts({
+  const page = await getStoreProductPage({
     category: "skincare",
     type: valueOf(params.type),
     concern: valueOf(params.concern),
@@ -27,7 +27,7 @@ async function SkincarePageContent({ searchParams }: PageProps) {
     isNewArrival: flag === "new" ? true : undefined,
     isOffer: flag === "offer" ? true : undefined,
     isBestSelling: flag === "best-selling" ? true : undefined,
-  });
+  }, valueOf(params.page));
 
   return (
     <SkincareProducts
@@ -40,7 +40,7 @@ async function SkincarePageContent({ searchParams }: PageProps) {
         />
       }
     >
-      <SkincareProductGrid products={products} />
+      <SkincareProductGrid {...page} />
     </SkincareProducts>
   );
 }
