@@ -1,40 +1,21 @@
-import { ObjectId } from "mongodb";
-import { getDb } from "@/lib/mongodb";
+import { connectMongoose } from "@/lib/mongoose";
+import { AdminUser } from "@/models/AdminUser";
 
-export type AdminUser = {
-  _id: ObjectId;
-  email: string;
-  password: string;
-  name?: string;
-  role?: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-const COLLECTION = "users";
-
-export async function getUserByEmail(
-  email: string,
-): Promise<AdminUser | null> {
-  const db = await getDb();
-  return db.collection<AdminUser>(COLLECTION).findOne({
-    email: email.toLowerCase().trim(),
-  });
+export async function getUserByEmail(email: string) {
+  await connectMongoose();
+  return AdminUser.findOne({ email: email.toLowerCase().trim() })
+    .select("+password")
+    .lean();
 }
 
 export async function updateUserPassword(
   email: string,
   passwordHash: string,
 ): Promise<boolean> {
-  const db = await getDb();
-  const result = await db.collection<AdminUser>(COLLECTION).updateOne(
+  await connectMongoose();
+  const result = await AdminUser.updateOne(
     { email: email.toLowerCase().trim() },
-    {
-      $set: {
-        password: passwordHash,
-        updatedAt: new Date(),
-      },
-    },
+    { $set: { password: passwordHash } },
   );
 
   return result.matchedCount === 1;
