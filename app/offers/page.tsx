@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { CategoryListing } from "@/components/common/allProducts";
 import CategoryProductGrid from "@/components/common/categoryProductGrid";
 import Searchbar from "@/components/common/searchbar";
-import { getStoreProducts } from "@/lib/store-products";
+import { getStoreProductPage } from "@/lib/store-products";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -14,10 +14,10 @@ function valueOf(value: string | string[] | undefined) {
 
 async function OffersContent({ searchParams }: PageProps) {
   const params = await searchParams;
-  const products = await getStoreProducts({
+  const page = await getStoreProductPage({
     search: valueOf(params.q),
     isOffer: true,
-  });
+  }, valueOf(params.page));
 
   return (
     <CategoryListing
@@ -25,7 +25,7 @@ async function OffersContent({ searchParams }: PageProps) {
       description="Shop current Zenlora offers and enjoy more from your routine."
       toolbar={<Searchbar placeholder="Search offers" basePath="/offers" />}
     >
-      <CategoryProductGrid products={products} pageSize={9} basePath="/offers" />
+      <CategoryProductGrid {...page} basePath="/offers" />
     </CategoryListing>
   );
 }
