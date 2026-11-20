@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { auth } from "@/admin-auth";
 import Sidebar from "@/components/common/sidebar";
 
 export const instant = false;
