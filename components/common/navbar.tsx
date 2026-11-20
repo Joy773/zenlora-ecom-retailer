@@ -16,8 +16,10 @@ import {
 import { useCart } from "@/context/cart-context";
 import { logoutCustomer } from "@/lib/customer-auth";
 import { ShopNowButton } from "./button";
-import LoginSignupModal from "./login&signup-modal";
+import dynamic from "next/dynamic";
 import Searchbar from "./searchbar";
+
+const LoginSignupModal = dynamic(() => import("./login&signup-modal"));
 
 const montserrat = Montserrat({
   weight: ["700", "800"],
@@ -419,7 +421,8 @@ export default function Navbar() {
   const { status: sessionStatus } = useSession();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
+  // Keep a pending verification challenge when the shopper closes and reopens the dialog.
+  const [accountOpen, setAccountOpen] = useState<boolean | null>(null);
   const [expandedMobile, setExpandedMobile] = useState<string | null>(null);
 
   const closeMenu = () => {
@@ -507,7 +510,7 @@ export default function Navbar() {
               onClick={() => setAccountOpen(true)}
               aria-label="Open login and sign-up"
               aria-haspopup="dialog"
-              aria-expanded={accountOpen}
+              aria-expanded={accountOpen === true}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-foreground transition-all duration-200 hover:border-primary hover:bg-primary/50 hover:text-accent"
             >
               <HiOutlineUser className="h-5 w-5" />
@@ -659,10 +662,9 @@ export default function Navbar() {
         </div>
       ) : null}
 
-      <LoginSignupModal
-        open={accountOpen}
-        onClose={() => setAccountOpen(false)}
-      />
+      {accountOpen !== null && (
+        <LoginSignupModal open={accountOpen} onClose={() => setAccountOpen(false)} />
+      )}
     </header>
   );
 }
