@@ -18,11 +18,8 @@ export default function AdminSearchbar({
   const updateSearch = (value: string) => {
     setQuery(value);
 
-    window.dispatchEvent(
-      new CustomEvent("zenlora:admin-search-changed", { detail: value }),
-    );
-
     const params = new URLSearchParams(searchParams.toString());
+    params.delete("page");
     const trimmed = value.trim();
 
     if (trimmed) {
