@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { auth } from "@/admin-auth";
 import { uploadProductImage } from "@/lib/cloudinary";
 import { connectMongoose } from "@/lib/mongoose";
 import { getDiscountPercent, Product } from "@/models/Product";
