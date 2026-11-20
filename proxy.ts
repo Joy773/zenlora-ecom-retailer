@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { auth } from "@/admin-auth";
 
 export const proxy = auth((req) => {
   const { pathname } = req.nextUrl;
