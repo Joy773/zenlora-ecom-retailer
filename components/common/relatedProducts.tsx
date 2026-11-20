@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { StoreProduct } from "@/lib/store-products";
+import type { StoreProductCard } from "@/lib/store-products";
 import { formatPrice } from "@/lib/format-price";
 import { ProductCardAddToCartIcon } from "./productCartActions";
 
-export default function RelatedProducts({ products }: { products: StoreProduct[] }) {
+export default function RelatedProducts({ products }: { products: StoreProductCard[] }) {
   if (products.length === 0) return null;
 
   return (
