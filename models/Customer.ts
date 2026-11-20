@@ -21,6 +21,10 @@ const customerSchema = new Schema(
       required: true,
       select: false,
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     collection: "customers",
