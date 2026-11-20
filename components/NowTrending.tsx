@@ -1,18 +1,24 @@
+import TrendingVideo from "./trending-video";
+
 const trendingVideos = [
   {
     src: "/trending/1.mp4",
+    poster: "/trending/1.jpg",
     label: "celimax the vita-a retinal shot tightening booster ",
   },
   {
     src: "/trending/2.mp4",
+    poster: "/trending/2.jpg",
     label: "arencia vitamin c booster shot",
   },
   {
     src: "/trending/3.mp4",
+    poster: "/trending/3.jpg",
     label: "medicube Kojic Acid Turmeric Niacinamide Serum 30ml",
   },
   {
     src: "/trending/4.mp4",
+    poster: "/trending/4.jpg",
     label: "The Medicube Capsule Cream Lineup",
   },
 ];
@@ -37,16 +43,7 @@ export default function NowTrending() {
             className="w-[calc(100vw-4rem)] shrink-0 snap-start md:w-auto"
           >
             <div className="relative aspect-[3/4] overflow-hidden bg-[#f2f2f0]">
-              <video
-                src={video.src}
-                className="h-full w-full object-cover"
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                aria-label={video.label}
-              />
+              <TrendingVideo src={video.src} poster={video.poster} label={video.label} />
             </div>
             <p className="mt-3 text-[13px] font-semibold text-foreground/80">{video.label}</p>
           </li>
