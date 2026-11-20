@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { HiOutlineXMark } from "react-icons/hi2";
 import { toast } from "react-toastify";
 import { mainCategories } from "@/components/admin-category";
-import Button, { AddProductButton } from "@/components/common/button";
+import Button from "@/components/common/button";
 
 export type ProductFormValues = {
   id?: string;
@@ -655,7 +655,13 @@ export function AddProductModal({
                       {(sizePrices.find((item) => item.size === size)?.images ?? []).map((src, index) => (
                         <li key={`${src}-${index}`} className="flex items-center gap-2 text-sm">
                           <a href={src} target="_blank" rel="noreferrer" className="flex min-w-0 flex-1 items-center gap-2">
-                            <Image src={src} alt={`${size} image ${index + 1}`} width={48} height={48} unoptimized className="h-12 w-12 rounded object-cover" />
+                            <Image
+                              src={src}
+                              alt={`${size} image ${index + 1}`}
+                              width={48}
+                              height={48}
+                              className="h-12 w-12 rounded object-cover"
+                            />
                             Image {index + 1}
                           </a>
                           <button
@@ -919,16 +925,5 @@ export function AddProductModal({
         </form>
       </div>
     </div>
-  );
-}
-
-export default function AddProductAction() {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <>
-      <AddProductButton onClick={() => setOpen(true)} />
-      <AddProductModal open={open} onClose={() => setOpen(false)} />
-    </>
   );
 }
