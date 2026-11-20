@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { CategoryListing } from "@/components/common/allProducts";
 import CategoryProductGrid from "@/components/common/categoryProductGrid";
 import Searchbar from "@/components/common/searchbar";
-import { getStoreProducts } from "@/lib/store-products";
+import { getStoreProductPage } from "@/lib/store-products";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -14,10 +14,10 @@ function valueOf(value: string | string[] | undefined) {
 
 async function NewArrivalsContent({ searchParams }: PageProps) {
   const params = await searchParams;
-  const products = await getStoreProducts({
+  const page = await getStoreProductPage({
     search: valueOf(params.q),
     isNewArrival: true,
-  });
+  }, valueOf(params.page));
 
   return (
     <CategoryListing
@@ -26,8 +26,7 @@ async function NewArrivalsContent({ searchParams }: PageProps) {
       toolbar={<Searchbar placeholder="Search new arrivals" basePath="/new-arrivals" />}
     >
       <CategoryProductGrid
-        products={products}
-        pageSize={9}
+        {...page}
         basePath="/new-arrivals"
       />
     </CategoryListing>
