@@ -1,12 +1,11 @@
 "use client";
 
+import Pagination from "@/components/common/pagination";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  AddProductModal,
-  type ProductFormValues,
-} from "@/components/AddProductModal";
+import { useEffect, useMemo, useState } from "react";
+import type { ProductFormValues } from "@/components/AddProductModal";
+import { ProductEditor } from "@/components/add-product-action";
 import { mainCategories } from "@/components/admin-category";
 import {
   ActiveButton,
@@ -108,18 +107,9 @@ function toFormValues(product: AdminProduct): ProductFormValues {
 
 export default function AdminProductsList() {
   const searchParams = useSearchParams();
-  const [liveSearchQuery, setLiveSearchQuery] = useState(
-    () => searchParams.get("q") ?? "",
-  );
-  const [liveCategory, setLiveCategory] = useState(
-    () => searchParams.get("category") ?? "",
-  );
-  const [liveType, setLiveType] = useState(
-    () => searchParams.get("type") ?? "",
-  );
-  const [liveConcern, setLiveConcern] = useState(
-    () => searchParams.get("concern") ?? "",
-  );
+  const query = searchParams.toString();
+  const [revision, setRevision] = useState(0);
+  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1 });
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [open, setOpen] = useState(false);
@@ -127,114 +117,48 @@ export default function AdminProductsList() {
   const [deleteError, setDeleteError] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const loadProducts = useCallback(async () => {
-    try {
-      const response = await fetch("/api/products");
-      const result = (await response.json().catch(() => null)) as {
-        products?: SavedProduct[];
-      } | null;
+  useEffect(() => {
+    const refresh = () => setRevision((value) => value + 1);
+    window.addEventListener("zenlora:products-changed", refresh);
+    return () => window.removeEventListener("zenlora:products-changed", refresh);
+  }, []);
 
-      if (!response.ok || !result?.products) {
-        setStatus("error");
-        return;
-      }
-
-      setProducts(
-        result.products.map((product) => ({
+  useEffect(() => {
+    const controller = new AbortController();
+    async function load() {
+      setStatus("loading");
+      try {
+        const response = await fetch(`/api/products?${query}`, { signal: controller.signal });
+        if (!response.ok) throw new Error("Product query failed");
+        const result = await response.json() as {
+          products: SavedProduct[];
+          currentPage: number;
+          totalPages: number;
+        };
+        if (controller.signal.aborted) return;
+        setProducts(result.products.map((product) => ({
           ...product,
           image: product.images[0] ?? "",
           categoryLabel: categoryLabel(product.category),
           subcategoryLabel: subcategoryLabel(product.category, product.subcategory),
-        })),
-      );
-      setStatus("ready");
-    } catch {
-      setStatus("error");
+        })));
+        setPagination({ currentPage: result.currentPage, totalPages: result.totalPages });
+        setStatus("ready");
+      } catch {
+        if (!controller.signal.aborted) setStatus("error");
+      }
     }
-  }, []);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void loadProducts();
-    }, 0);
-    const handleSearchChanged = (event: Event) => {
-      const customEvent = event as CustomEvent<string>;
-      setLiveSearchQuery(
-        typeof customEvent.detail === "string" ? customEvent.detail : "",
-      );
-    };
-    const handleCategoryChanged = (event: Event) => {
-      const customEvent = event as CustomEvent<{
-        category?: string;
-        type?: string;
-        concern?: string;
-      }>;
-      const detail = customEvent.detail ?? {};
-      setLiveCategory(detail.category ?? "");
-      setLiveType(detail.type ?? "");
-      setLiveConcern(detail.concern ?? "");
-    };
-
-    window.addEventListener("zenlora:products-changed", loadProducts);
-    window.addEventListener(
-      "zenlora:admin-search-changed",
-      handleSearchChanged,
-    );
-    window.addEventListener(
-      "zenlora:admin-category-changed",
-      handleCategoryChanged,
-    );
-
+    const timer = window.setTimeout(load, 120);
     return () => {
       window.clearTimeout(timer);
-      window.removeEventListener("zenlora:products-changed", loadProducts);
-      window.removeEventListener(
-        "zenlora:admin-search-changed",
-        handleSearchChanged,
-      );
-      window.removeEventListener(
-        "zenlora:admin-category-changed",
-        handleCategoryChanged,
-      );
+      controller.abort();
     };
-  }, [loadProducts]);
+  }, [query, revision]);
 
   const initialValues = useMemo(
     () => (editingProduct ? toFormValues(editingProduct) : null),
     [editingProduct],
   );
-
-  const filteredProducts = useMemo(() => {
-    const query = liveSearchQuery.trim().toLowerCase();
-    const subcategory = liveType
-      ? `type:${liveType}`
-      : liveConcern
-        ? `concern:${liveConcern}`
-        : "";
-
-    return products.filter((product) => {
-      const matchesCategory =
-        !liveCategory || product.category === liveCategory;
-      const matchesSubcategory =
-        !subcategory || product.subcategory === subcategory;
-      const searchableText = [
-        product.name,
-        product.description,
-        product.brand,
-        product.categoryLabel,
-        product.subcategoryLabel,
-        product.seoSlug,
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      return (
-        matchesCategory &&
-        matchesSubcategory &&
-        (!query || searchableText.includes(query))
-      );
-    });
-  }, [products, liveSearchQuery, liveCategory, liveType, liveConcern]);
 
   const openUpdateModal = (product: AdminProduct) => {
     setEditingProduct(product);
@@ -266,7 +190,7 @@ export default function AdminProductsList() {
         return;
       }
 
-      setProducts((current) => current.filter((product) => product.id !== id));
+      setRevision((value) => value + 1);
       setDeletingId(null);
     } catch {
       setDeleteError("Could not delete the product.");
@@ -291,16 +215,13 @@ export default function AdminProductsList() {
           </p>
         ) : null}
         {status === "ready" && products.length === 0 ? (
-          <p className="p-5 text-[13px] text-foreground/60">No products yet.</p>
-        ) : null}
-        {status === "ready" && products.length > 0 && filteredProducts.length === 0 ? (
           <p className="p-5 text-[13px] text-foreground/60">
             No products match your search.
           </p>
         ) : null}
-        {status === "ready" && filteredProducts.length > 0 ? (
+        {status === "ready" && products.length > 0 ? (
           <ul className="divide-y divide-foreground/10">
-            {filteredProducts.map((product) => {
+            {products.map((product) => {
               const salePrice = product.discountedPrice.trim();
 
               return (
@@ -396,12 +317,17 @@ export default function AdminProductsList() {
         ) : null}
       </div>
 
-      <AddProductModal
-        open={open}
-        onClose={closeModal}
-        mode="update"
-        initialValues={initialValues}
-      />
+      {status === "ready" && (
+        <Pagination {...pagination} hrefForPage={(page) => {
+          const params = new URLSearchParams(query);
+          params.set("page", String(page));
+          return `/admin/products?${params}`;
+        }} />
+      )}
+
+      {open && (
+        <ProductEditor open onClose={closeModal} mode="update" initialValues={initialValues} />
+      )}
     </>
   );
 }
