@@ -47,6 +47,10 @@ export const { handlers, signIn, signOut } = NextAuth({
           return null;
         }
 
+        if (customer.emailVerification) {
+          return null;
+        }
+
         return {
           id: customer._id.toString(),
           email: customer.email,
