@@ -1,3 +1,4 @@
+import { productSearchGrams, searchIndex } from "../lib/product-search";
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
 function parseMoney(value: string) {
@@ -6,6 +7,10 @@ function parseMoney(value: string) {
 
   const amount = Number(cleaned);
   return Number.isFinite(amount) ? amount : null;
+}
+
+export function listingPrice(variant?: { price?: string | null; discountedPrice?: string | null }) {
+  return parseMoney(variant?.discountedPrice?.trim() || variant?.price || "");
 }
 
 export function getDiscountPercent(price: string, discountedPrice: string) {
@@ -31,6 +36,8 @@ const productSchema = new Schema(
     seoMetaTitle: { type: String, default: "", trim: true, maxlength: 60 },
     seoMetaDescription: { type: String, default: "", trim: true, maxlength: 160 },
     seoSlug: { type: String, default: "", trim: true, lowercase: true },
+    searchGrams: { type: [String], select: false },
+    listingPrice: { type: Number, default: null },
     sizes: { type: [String], default: [] },
     sizePrices: {
       type: [
@@ -59,7 +66,14 @@ const productSchema = new Schema(
   { timestamps: true },
 );
 
+productSchema.index(searchIndex);
+productSchema.index({ seoSlug: 1 });
+productSchema.index({ createdAt: -1, _id: -1 });
+productSchema.index({ category: 1, createdAt: -1, _id: -1 });
+
 productSchema.pre("validate", function () {
+  this.searchGrams = productSearchGrams(this);
+  this.listingPrice = listingPrice(this.sizePrices[0]);
   this.sizePrices.forEach((variant) => {
     variant.discountPercent = getDiscountPercent(
       variant.price ?? "",
