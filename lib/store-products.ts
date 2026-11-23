@@ -188,9 +188,79 @@ function productFilter(options: StoreProductOptions) {
   if (search) Object.assign(filter, productSearchFilter(search));
 
   if (options.price?.length) {
-    const ranges = options.price.filter((band) => Object.hasOwn(priceBands, band))
-      .map((band) => ({ listingPrice: priceBands[band] }));
-    if (ranges.length) filter.$and = [{ $or: ranges }];
+    const bands = options.price.filter((band) => Object.hasOwn(priceBands, band));
+    const ranges = bands.map((band) => priceBands[band]);
+    if (ranges.length) {
+      const variantPrice = {
+        $let: {
+          vars: {
+            firstVariant: { $arrayElemAt: ["$sizePrices", 0] },
+          },
+          in: {
+            $let: {
+              vars: {
+                salePrice: {
+                  $trim: {
+                    input: { $ifNull: ["$$firstVariant.discountedPrice", ""] },
+                  },
+                },
+              },
+              in: {
+                $cond: [
+                  { $ne: ["$$salePrice", ""] },
+                  "$$salePrice",
+                  { $ifNull: ["$$firstVariant.price", ""] },
+                ],
+              },
+            },
+          },
+        },
+      };
+      const parsedVariantPrice = {
+        $let: {
+          vars: {
+            match: {
+              $regexFind: {
+                input: {
+                  $replaceAll: {
+                    input: variantPrice,
+                    find: ",",
+                    replacement: "",
+                  },
+                },
+                regex: "[0-9]+(?:\\.[0-9]+)?",
+              },
+            },
+          },
+          in: {
+            $convert: {
+              input: "$$match.match",
+              to: "double",
+              onError: null,
+              onNull: null,
+            },
+          },
+        },
+      };
+      const fallbackRanges = ranges.map((range) => ({
+        $and: Object.entries(range).map(([operator, amount]) => ({
+          [operator]: [parsedVariantPrice, amount],
+        })),
+      }));
+
+      filter.$and = [
+        ...((filter.$and as Record<string, unknown>[] | undefined) ?? []),
+        {
+          $or: [
+            ...ranges.map((range) => ({ listingPrice: range })),
+            {
+              listingPrice: null,
+              $expr: { $or: fallbackRanges },
+            },
+          ],
+        },
+      ];
+    }
     else filter._id = { $in: [] };
   }
   return filter;
@@ -263,6 +333,28 @@ async function cachedStoreProducts(options: LimitedProductOptions) {
 
 export function getStoreProducts(options: LimitedProductOptions) {
   return options.search?.trim() ? readStoreProducts(options) : cachedStoreProducts(options);
+}
+
+async function readStoreSubcategoryCounts(category: string) {
+  await connectMongoose();
+
+  const counts = await Product.aggregate<{ _id: string; count: number }>([
+    { $match: { category } },
+    { $group: { _id: "$subcategory", count: { $sum: 1 } } },
+  ]);
+
+  return Object.fromEntries(counts.map(({ _id, count }) => [_id, count]));
+}
+
+async function cachedStoreSubcategoryCounts(category: string) {
+  "use cache: remote";
+  cacheLife("minutes");
+  cacheTag(catalogListingsTag);
+  return readStoreSubcategoryCounts(category);
+}
+
+export function getStoreSubcategoryCounts(category: string) {
+  return cachedStoreSubcategoryCounts(category);
 }
 
 async function readStoreProductPage(options: StoreProductOptions, page?: string) {
