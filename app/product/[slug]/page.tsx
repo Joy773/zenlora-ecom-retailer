@@ -31,6 +31,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     <>
       <ProductDetail
         product={{
+          productId: product.id,
           slug: product.slug ?? slug,
           name: product.name,
           price: product.price,
