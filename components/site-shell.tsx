@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { toast } from "react-toastify";
 import Footer from "@/components/common/Footer";
 import Navbar from "@/components/common/navbar";
 
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
+  const { status, update } = useSession();
   const searchParams = useSearchParams();
   const isAdminRoute = pathname.startsWith("/admin");
   const authNotice = searchParams.get("auth");
@@ -25,15 +26,18 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
 
     if (!message) return;
 
-    toast.success(message, { toastId: `auth-${authNotice}` });
+    const signedIn = authNotice === "login" || authNotice === "signup";
+    if (signedIn && status === "loading") return;
 
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("auth");
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, {
-      scroll: false,
-    });
-  }, [authNotice, pathname, router, searchParams]);
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("auth") !== authNotice) return;
+    url.searchParams.delete("auth");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+
+    // Server-side sign-in sets the cookie while SessionProvider stays mounted.
+    if (signedIn && status === "unauthenticated") void update();
+    toast.success(message, { toastId: `auth-${authNotice}` });
+  }, [authNotice, status, update]);
 
   if (isAdminRoute) {
     return <main className="flex flex-1 flex-col">{children}</main>;
