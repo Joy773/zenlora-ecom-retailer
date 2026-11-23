@@ -11,6 +11,7 @@ import Pagination from "./pagination";
 
 function toCartProduct(product: StoreProductCard): CartProduct {
   return {
+    productId: product.id,
     slug: product.slug ?? product.href.replace(/^\/product\//, ""),
     name: product.name,
     price: product.price,
