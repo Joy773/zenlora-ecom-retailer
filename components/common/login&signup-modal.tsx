@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 import { HiOutlineXMark } from "react-icons/hi2";
+import { toast } from "react-toastify";
 import {
   customerAuth,
   type CustomerAuthState,
@@ -12,6 +13,7 @@ type AccountView = "login" | "signup" | "verify";
 type LoginSignupModalProps = {
   open: boolean;
   onClose: () => void;
+  redirectTo?: string;
 };
 
 const inputClassName =
@@ -22,6 +24,7 @@ const initialAuthState: CustomerAuthState = {};
 export default function LoginSignupModal({
   open,
   onClose,
+  redirectTo = "/?auth=login",
 }: LoginSignupModalProps) {
   const [view, setView] = useState<AccountView>("login");
   const [authState, authFormAction, isAuthPending] = useActionState(
@@ -30,6 +33,12 @@ export default function LoginSignupModal({
   );
   const titleId = useId();
   const firstInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (authState.action === "login" && authState.error) {
+      toast.error(authState.error);
+    }
+  }, [authState.action, authState.error]);
 
   useEffect(() => {
     if (authState.verificationRequired) {
@@ -155,6 +164,7 @@ export default function LoginSignupModal({
         {activeView === "login" ? (
           <form action={authFormAction} className="mt-7 flex flex-col gap-5">
             <input type="hidden" name="intent" value="login" />
+            <input type="hidden" name="redirectTo" value={redirectTo} />
             {authState.verified && authState.success ? (
               <p className="text-xs text-emerald-700" role="status">
                 {authState.success}
@@ -189,11 +199,6 @@ export default function LoginSignupModal({
                 placeholder="Enter your password"
               />
             </label>
-            {authState.action === "login" && authState.error ? (
-              <p className="text-xs text-red-600" role="alert">
-                {authState.error}
-              </p>
-            ) : null}
             <button
               type="submit"
               disabled={isAuthPending}
@@ -215,6 +220,7 @@ export default function LoginSignupModal({
         ) : activeView === "signup" ? (
           <form action={authFormAction} className="mt-7 flex flex-col gap-5">
             <input type="hidden" name="intent" value="register" />
+            <input type="hidden" name="redirectTo" value={redirectTo} />
             <label className="flex flex-col gap-2">
               <span className="text-xs font-medium text-foreground/70">
                 Full name
