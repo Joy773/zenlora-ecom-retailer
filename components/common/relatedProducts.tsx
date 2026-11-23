@@ -39,6 +39,7 @@ export default function RelatedProducts({ products }: { products: StoreProductCa
               </Link>
               <ProductCardAddToCartIcon
                 product={{
+                  productId: product.id,
                   slug: product.slug,
                   name: product.name,
                   price: product.price,
