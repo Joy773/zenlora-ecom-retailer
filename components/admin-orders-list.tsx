@@ -1,4 +1,5 @@
 import type { AdminOrder } from "@/lib/store-orders";
+import PendingOrderStatus from "./pending-order-status";
 
 function formatMoney(amount: number) {
   return `৳${new Intl.NumberFormat("en-BD", { maximumFractionDigits: 0 }).format(amount)}`;
@@ -13,9 +14,8 @@ function orderDate(value: string) {
 }
 
 function statusClassName(status: string) {
-  if (status === "delivered") return "bg-green-100 text-green-800";
+  if (status === "completed" || status === "delivered") return "bg-green-100 text-green-800";
   if (status === "cancelled") return "bg-red-100 text-red-800";
-  if (status === "pending") return "bg-amber-100 text-amber-800";
   return "bg-primary/50 text-foreground/75";
 }
 
@@ -45,11 +45,15 @@ export default function AdminOrdersList({ orders }: { orders: AdminOrder[] }) {
                 {orderDate(order.createdAt)}
               </p>
             </div>
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusClassName(order.status)}`}
-            >
-              {order.status}
-            </span>
+            {order.status === "pending" ? (
+              <PendingOrderStatus orderNumber={order.orderNumber} />
+            ) : (
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusClassName(order.status)}`}
+              >
+                {order.status}
+              </span>
+            )}
           </div>
 
           <div className="grid gap-5 py-5 md:grid-cols-[minmax(0,1fr)_minmax(15rem,0.7fr)]">
