@@ -434,7 +434,7 @@ export default function Navbar() {
 
   return (
     <header className="relative z-40 border-b border-primary bg-white">
-      <nav className="flex items-center justify-between gap-4 px-8 py-4 md:px-16 lg:px-20">
+      <nav className="flex items-center justify-between gap-1 px-2 py-4 max-sm:pl-4 sm:gap-4 sm:px-8 md:px-16 lg:px-20">
         <Link
           href="/"
           onClick={closeMenu}
@@ -495,7 +495,7 @@ export default function Navbar() {
           ))}
         </ul>
 
-        <div className="hidden shrink-0 items-center gap-3 lg:flex">
+        <div className="flex shrink-0 items-center lg:gap-3">
           {sessionStatus === "authenticated" ? (
             <form action={logoutCustomer}>
               <button
@@ -509,7 +509,11 @@ export default function Navbar() {
           ) : sessionStatus === "unauthenticated" ? (
             <button
               type="button"
-              onClick={() => setAccountOpen(true)}
+              onClick={() => {
+                closeMenu();
+                setSearchOpen(false);
+                setAccountOpen(true);
+              }}
               aria-label="Open login and sign-up"
               aria-haspopup="dialog"
               aria-expanded={accountOpen === true}
@@ -529,25 +533,14 @@ export default function Navbar() {
           >
             <HiOutlineMagnifyingGlass className="h-5 w-5" />
           </button>
-          <CartIcon />
-          <ShopNowButton />
-        </div>
-
-        <div className="flex items-center gap-1 lg:hidden">
-          <button
-            type="button"
-            onClick={() => setSearchOpen((value) => !value)}
-            aria-expanded={searchOpen}
-            aria-label="Search products"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-primary/60"
-          >
-            <HiOutlineMagnifyingGlass className="h-5 w-5" />
-          </button>
           <CartIcon onClick={closeMenu} />
+          <div className="hidden lg:block">
+            <ShopNowButton />
+          </div>
           <button
             type="button"
             onClick={() => setOpen((value) => !value)}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-primary/60"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-primary/60 lg:hidden"
             aria-expanded={open}
             aria-controls="mobile-nav"
             aria-label={open ? "Close menu" : "Open menu"}
