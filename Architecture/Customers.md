@@ -19,8 +19,8 @@ The customer model defines what gets stored. The functions in `lib/customer-auth
 
 1. The shopper opens the navbar account icon, chooses **Sign up**, and enters their full name, email, password, and password confirmation.
 2. The modal sends the form to the registration function. The server validates the fields, checks that the passwords match, and trims and lowercases the email. If validation fails, it returns a message to the modal before saving anything.
-3. The server uses `bcryptjs` to hash the password with a salt. It connects through `connectMongoose()` and calls `Customer.create()` to save three account fields: `fullName` for display, `email` for lookup, and `passwordHash` for login. The password confirmation is used only for validation.
-4. A unique index on the normalized email ensures that even two simultaneous sign-ups can create only one account for that address. The modal reports duplicate emails and other validation errors. After a successful sign-up, it signs the shopper in, redirects to the storefront, and shows a success toast.
+3. The server uses `bcryptjs` to hash the password with a salt. It connects through `connectMongoose()` and calls `Customer.create()` to save the account with `isVerified: false`. The password confirmation is used only for validation. Sign-up does not require email verification.
+4. A unique index on the normalized email ensures that even two simultaneous sign-ups can create only one account for that address. The modal reports duplicate emails and other validation errors. After a successful sign-up, Auth.js creates a customer session and redirects the shopper to the storefront with a success toast.
 
 ## Login flow
 
