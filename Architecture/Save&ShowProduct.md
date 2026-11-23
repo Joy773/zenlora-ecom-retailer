@@ -55,11 +55,11 @@ These existing files are used to display products to customers:
 
 | File | Responsibility |
 | --- | --- |
-| `app/skincare/page.tsx` | Storefront skincare page. It will fetch skincare products and pass them to the grid. |
-| `app/haircare/page.tsx` | Storefront haircare page. It will fetch haircare products and pass them to the grid. |
-| `app/makeup/page.tsx` | Storefront makeup page. It will fetch makeup products and pass them to the grid. |
-| `app/new-arrivals/page.tsx` | Storefront page that reads products where `isNewArrival` is `true`. |
-| `app/offers/page.tsx` | Storefront page that reads products where `isOffer` is `true`. |
+| `app/(catalog)/skincare/page.tsx` | Storefront skincare page. It will fetch skincare products and pass them to the grid. |
+| `app/(catalog)/haircare/page.tsx` | Storefront haircare page. It will fetch haircare products and pass them to the grid. |
+| `app/(catalog)/makeup/page.tsx` | Storefront makeup page. It will fetch makeup products and pass them to the grid. |
+| `app/(catalog)/new-arrivals/page.tsx` | Storefront page that reads products where `isNewArrival` is `true`. |
+| `app/(catalog)/offers/page.tsx` | Storefront page that reads products where `isOffer` is `true`. |
 | `components/common/skincareProductGrid.tsx` | Receives skincare products and renders the shared grid. |
 | `components/common/haircareProductGrid.tsx` | Receives haircare products and renders the shared grid. |
 | `components/common/makeupProductGrid.tsx` | Receives makeup products and renders the shared grid. |
@@ -82,8 +82,8 @@ Create:
 | File | Responsibility |
 | --- | --- |
 | `lib/store-products.ts` | Server-only product queries and mapping for the storefront. It reads MongoDB through `Product`, applies category/subcategory/flag filters, and returns frontend-ready product data. |
-| `app/new-arrivals/page.tsx` | Customer-facing route for products marked as New Arrival. |
-| `app/offers/page.tsx` | Customer-facing route for products marked as Offer. |
+| `app/(catalog)/new-arrivals/page.tsx` | Customer-facing route for products marked as New Arrival. |
+| `app/(catalog)/offers/page.tsx` | Customer-facing route for products marked as Offer. |
 
 No new public API route is needed for the recommended architecture. The server pages call `lib/store-products.ts` directly.
 
@@ -153,7 +153,7 @@ Whether out-of-stock products are hidden is a storefront decision. If they shoul
 ```mermaid
 flowchart TD
   A[Customer opens /skincare?type=serum-oils]
-  A --> B[app/skincare/page.tsx]
+  A --> B["app/(catalog)/skincare/page.tsx"]
   B --> C[Read searchParams]
   C --> D[Call getStoreProducts in lib/store-products.ts]
   D --> E[Build filter: category=skincare]
