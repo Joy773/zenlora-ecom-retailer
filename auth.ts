@@ -5,7 +5,7 @@ import { sessionConfig } from "@/lib/session-config";
 import { connectMongoose } from "@/lib/mongoose";
 import { Customer } from "@/models/Customer";
 
-export const { handlers, signIn, signOut } = NextAuth({
+export const { handlers, auth, signIn, signOut } = NextAuth({
   ...sessionConfig("customer"),
   providers: [
     Credentials({
