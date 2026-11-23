@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import ProductGridSkeleton from "@/components/common/productGridSkeleton";
 import ProductDetail from "@/components/common/productDetail";
+import ProductDetailSkeleton from "@/components/common/productDetailSkeleton";
 import RelatedProducts from "@/components/common/relatedProducts";
-import { getStoreProductBySlug, getStoreProducts } from "@/lib/store-products";
+import { getStoreProductBySlug } from "@/lib/store-products";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -9,20 +12,21 @@ type ProductPageProps = {
 
 export const instant = false;
 
-export default async function ProductPage({ params }: ProductPageProps) {
+export default function ProductPage(props: ProductPageProps) {
+  return (
+    <Suspense fallback={<ProductDetailSkeleton />}>
+      <ProductPageContent {...props} />
+    </Suspense>
+  );
+}
+
+async function ProductPageContent({ params }: ProductPageProps) {
   const { slug } = await params;
   const product = await getStoreProductBySlug(slug);
 
   if (!product) {
     notFound();
   }
-
-  const relatedProducts = await getStoreProducts({
-    category: product.category,
-    subcategory: product.subcategory,
-    excludeId: product.id,
-    limit: 10,
-  });
 
   const sizes = product.sizePrices.map((variant) => variant.size).filter(Boolean);
   const description = product.description || "No description available.";
@@ -53,7 +57,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
           perfectFor: product.perfectFor || "No information available.",
         }}
       />
-      <RelatedProducts products={relatedProducts} />
+      <Suspense
+        fallback={
+          <div className="px-8 py-12 md:px-16 lg:px-20">
+            <ProductGridSkeleton singleRow />
+          </div>
+        }
+      >
+        <RelatedProducts
+          category={product.category}
+          subcategory={product.subcategory}
+          id={product.id}
+        />
+      </Suspense>
     </>
   );
 }
