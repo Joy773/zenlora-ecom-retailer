@@ -8,6 +8,7 @@ import { logoutAction } from "@/app/actions/auth";
 
 const links = [
   { href: "/admin/products", label: "Products" },
+  { href: "/admin/orders", label: "Orders" },
   { href: "/admin/change-password", label: "Change password" },
 ];
 
