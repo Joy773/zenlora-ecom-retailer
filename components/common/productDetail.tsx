@@ -101,6 +101,7 @@ export default function ProductDetail({
       {
         ...product,
         price: selectedPrice,
+          variantSize: size,
         slug: `${product.slug}-${sizeSlug}`,
         name: variantName,
       },
