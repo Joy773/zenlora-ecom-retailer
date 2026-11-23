@@ -2,15 +2,23 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { HiOutlineTrash } from "react-icons/hi2";
+import { toast } from "react-toastify";
 import { formatCartMoney, useCart } from "@/context/cart-context";
 import { getDeliveryFee } from "@/lib/delivery";
 import { formatPrice } from "@/lib/format-price";
 import Button from "./button";
+import ConfirmOderModal from "@/components/confirmOderModal";
+import LoginSignupModal from "@/components/common/login&signup-modal";
 import { QuantityStepper } from "./productCartActions";
 
+const checkoutResumeKey = "zenlora:checkout-resume";
+const checkoutIntentKey = "zenlora:checkout-intent";
+
 export default function CartView() {
+  const { data: session, status: sessionStatus } = useSession();
   const {
     items,
     itemCount,
@@ -20,8 +28,191 @@ export default function CartView() {
     removeItem,
     clearCart,
   } = useCart();
-  const [city, setCity] = useState("");
+  const [deliveryDetails, setDeliveryDetails] = useState({
+    fullName: "",
+    contact: "",
+    address: "",
+    city: "",
+    zipCode: "",
+  });
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const closeCheckout = useCallback(() => setCheckoutOpen(false), []);
+  const orderRequestId = useRef<string | null>(null);
+  const city = deliveryDetails.city;
   const deliveryFee = getDeliveryFee(city);
+
+  const closeSignIn = useCallback(() => {
+    try {
+      sessionStorage.removeItem(checkoutIntentKey);
+    } catch {
+      // Closing the dialog still works when storage is unavailable.
+    }
+    setSignInOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    let savedDetails: unknown;
+    try {
+      const stored = sessionStorage.getItem(checkoutResumeKey);
+      if (!stored) return;
+      savedDetails = JSON.parse(stored);
+    } catch {
+      try {
+        sessionStorage.removeItem(checkoutResumeKey);
+      } catch {
+        // The stored checkout intent cannot be recovered in this browser.
+      }
+      return;
+    }
+
+    if (
+      typeof savedDetails !== "object" ||
+      savedDetails === null ||
+      !["fullName", "contact", "address", "city", "zipCode"].every(
+        (field) => typeof (savedDetails as Record<string, unknown>)[field] === "string",
+      )
+    ) {
+      try {
+        sessionStorage.removeItem(checkoutResumeKey);
+      } catch {
+        // Ignore unavailable session storage.
+      }
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      setDeliveryDetails(savedDetails as typeof deliveryDetails);
+      let shouldResumeCheckout = false;
+      try {
+        shouldResumeCheckout =
+          sessionStorage.getItem(checkoutIntentKey) === "true";
+      } catch {
+        // Keep restored delivery details even if browser storage is unavailable.
+      }
+      if (
+        sessionStatus === "authenticated" &&
+        session?.user.role === "customer" &&
+        shouldResumeCheckout
+      ) {
+        setSignInOpen(false);
+        setCheckoutOpen(true);
+        try {
+          sessionStorage.removeItem(checkoutIntentKey);
+        } catch {
+          // The modal can still open if browser storage becomes unavailable.
+        }
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [isHydrated, session?.user.role, sessionStatus]);
+
+  const updateDeliveryField = (
+    field: keyof typeof deliveryDetails,
+    value: string,
+  ) => {
+    const updated = { ...deliveryDetails, [field]: value };
+    setDeliveryDetails(updated);
+    try {
+      sessionStorage.setItem(checkoutResumeKey, JSON.stringify(updated));
+    } catch {
+      // Keep the current form usable when browser storage is unavailable.
+    }
+    orderRequestId.current = null;
+  };
+
+  const clearCartItems = () => {
+    orderRequestId.current = null;
+    clearCart();
+  };
+
+  const changeItemQuantity = (slug: string, quantity: number) => {
+    orderRequestId.current = null;
+    setQuantity(slug, quantity);
+  };
+
+  const handleCheckout = () => {
+    const hasMissingField = Object.values(deliveryDetails).some(
+      (value) => !value.trim(),
+    );
+    if (hasMissingField) {
+      toast.error("Fill all the fields.");
+      return;
+    }
+
+    if (sessionStatus === "loading") return;
+
+    if (session?.user.role === "customer") {
+      orderRequestId.current ??= crypto.randomUUID();
+      setCheckoutOpen(true);
+      return;
+    }
+
+    try {
+      sessionStorage.setItem(checkoutResumeKey, JSON.stringify(deliveryDetails));
+      sessionStorage.setItem(checkoutIntentKey, "true");
+    } catch {
+      toast.error("Unable to resume checkout after sign-in. Please try again.");
+      return;
+    }
+    setSignInOpen(true);
+  };
+
+  const handleConfirmOrder = async () => {
+    if (isSubmittingOrder) return;
+
+    orderRequestId.current ??= crypto.randomUUID();
+    setIsSubmittingOrder(true);
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idempotencyKey: orderRequestId.current,
+          expectedSubtotal: subtotal,
+          deliveryDetails,
+          items: items.map((item) => ({
+            productId: item.productId,
+            href: item.href,
+            variantSize: item.variantSize,
+            quantity: item.quantity,
+          })),
+        }),
+      });
+      const result = (await response.json().catch(() => ({}))) as {
+        orderNumber?: unknown;
+        error?: unknown;
+      };
+
+      if (!response.ok) {
+        throw new Error(
+          typeof result.error === "string"
+            ? result.error
+            : "We could not save your order. Please try again.",
+        );
+      }
+      if (typeof result.orderNumber !== "string") {
+        throw new Error("The order was saved, but we could not read its number.");
+      }
+
+      clearCart();
+      setCheckoutOpen(false);
+      orderRequestId.current = null;
+      toast.success(`Order ${result.orderNumber} has been placed.`);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "We could not save your order. Please try again.",
+      );
+    } finally {
+      setIsSubmittingOrder(false);
+    }
+  };
 
   if (!isHydrated) {
     return (
@@ -66,7 +257,7 @@ export default function CartView() {
         </div>
         <button
           type="button"
-          onClick={clearCart}
+          onClick={clearCartItems}
           className="text-[12px] font-medium tracking-wide text-foreground/55 transition-colors hover:text-accent"
         >
           Clear cart
@@ -103,7 +294,10 @@ export default function CartView() {
                   </p>
                   <button
                     type="button"
-                    onClick={() => removeItem(item.slug)}
+                  onClick={() => {
+                    orderRequestId.current = null;
+                    removeItem(item.slug);
+                  }}
                     aria-label={`Remove ${item.name} from cart`}
                     title="Remove from cart"
                     className="mt-2 inline-flex h-7 w-7 items-center justify-center rounded-full text-foreground/50 transition-colors hover:bg-primary/50 hover:text-accent"
@@ -115,10 +309,10 @@ export default function CartView() {
                 <QuantityStepper
                   quantity={item.quantity}
                   onDecrement={() =>
-                    setQuantity(item.slug, item.quantity - 1)
+                    changeItemQuantity(item.slug, item.quantity - 1)
                   }
                   onIncrement={() =>
-                    setQuantity(item.slug, item.quantity + 1)
+                    changeItemQuantity(item.slug, item.quantity + 1)
                   }
                 />
               </div>
@@ -137,7 +331,7 @@ export default function CartView() {
           <div aria-live="polite" aria-atomic="true" className="mt-2">
             {deliveryFee === null ? (
               <p className="text-[12px] leading-relaxed text-foreground/55">
-                Enter your city to see the delivery charge.
+                Delivery is ৳70 in Dhaka and ৳130 outside Dhaka. Enter your city at checkout.
               </p>
             ) : (
               <>
@@ -165,6 +359,10 @@ export default function CartView() {
                 <input
                   type="text"
                   name="fullName"
+                  value={deliveryDetails.fullName}
+                  onChange={(event) =>
+                    updateDeliveryField("fullName", event.currentTarget.value)
+                  }
                   autoComplete="name"
                   placeholder="Your full name"
                   className="rounded-lg border border-primary bg-white px-3 py-2 text-[12px] text-foreground outline-none transition-colors placeholder:text-foreground/35 focus:border-accent"
@@ -177,6 +375,15 @@ export default function CartView() {
                 <input
                   type="tel"
                   name="contact"
+                  value={deliveryDetails.contact}
+                  onChange={(event) =>
+                    updateDeliveryField(
+                      "contact",
+                      event.currentTarget.value.replace(/[^0-9+()\s-]/g, ""),
+                    )
+                  }
+                  inputMode="tel"
+                  pattern="[0-9+() -]+"
                   autoComplete="tel"
                   placeholder="Phone number"
                   className="rounded-lg border border-primary bg-white px-3 py-2 text-[12px] text-foreground outline-none transition-colors placeholder:text-foreground/35 focus:border-accent"
@@ -188,6 +395,10 @@ export default function CartView() {
                 </span>
                 <textarea
                   name="address"
+                  value={deliveryDetails.address}
+                  onChange={(event) =>
+                    updateDeliveryField("address", event.currentTarget.value)
+                  }
                   autoComplete="street-address"
                   rows={2}
                   placeholder="House, road, area"
@@ -203,7 +414,9 @@ export default function CartView() {
                     type="text"
                     name="city"
                     value={city}
-                    onChange={(event) => setCity(event.currentTarget.value)}
+                    onChange={(event) =>
+                      updateDeliveryField("city", event.currentTarget.value)
+                    }
                     autoComplete="address-level2"
                     placeholder="City"
                     className="min-w-0 rounded-lg border border-primary bg-white px-3 py-2 text-[12px] text-foreground outline-none transition-colors placeholder:text-foreground/35 focus:border-accent"
@@ -216,6 +429,10 @@ export default function CartView() {
                   <input
                     type="text"
                     name="zipCode"
+                    value={deliveryDetails.zipCode}
+                    onChange={(event) =>
+                      updateDeliveryField("zipCode", event.currentTarget.value)
+                    }
                     autoComplete="postal-code"
                     placeholder="ZIP code"
                     className="min-w-0 rounded-lg border border-primary bg-white px-3 py-2 text-[12px] text-foreground outline-none transition-colors placeholder:text-foreground/35 focus:border-accent"
@@ -224,11 +441,33 @@ export default function CartView() {
               </div>
             </div>
           </div>
-          <Button variant="accent" className="mt-6 w-full rounded-full">
-            Checkout
+
+          <Button
+            type="button"
+            variant="accent"
+            onClick={handleCheckout}
+            disabled={sessionStatus === "loading"}
+            className="mt-6 w-full rounded-full"
+          >
+            {sessionStatus === "loading" ? "Checking account…" : "Checkout"}
           </Button>
         </aside>
       </div>
+      {checkoutOpen ? (
+        <ConfirmOderModal
+          subtotal={subtotal}
+          deliveryFee={deliveryFee}
+          city={city}
+          onClose={closeCheckout}
+          onConfirm={handleConfirmOrder}
+          isSubmitting={isSubmittingOrder}
+        />
+      ) : null}
+      <LoginSignupModal
+        open={signInOpen}
+        onClose={closeSignIn}
+        redirectTo="/cart"
+      />
     </section>
   );
 }
