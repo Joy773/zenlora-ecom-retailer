@@ -11,6 +11,8 @@ import {
 } from "react";
 
 export type CartProduct = {
+  productId?: string;
+  variantSize?: string;
   slug: string;
   name: string;
   price: string;
