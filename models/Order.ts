@@ -45,7 +45,7 @@ const orderSchema = new Schema(
     total: { type: Number, required: true, min: 0 },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"],
+      enum: ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled", "completed"],
       default: "pending",
       required: true,
     },
@@ -57,6 +57,10 @@ orderSchema.index({ createdAt: -1 });
 orderSchema.index({ status: 1, createdAt: -1 });
 
 export type OrderDocument = InferSchemaType<typeof orderSchema>;
+
+if (process.env.NODE_ENV !== "production" && mongoose.models.Order) {
+  mongoose.deleteModel("Order");
+}
 
 export const Order: Model<OrderDocument> =
   mongoose.models.Order || mongoose.model("Order", orderSchema);
