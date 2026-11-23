@@ -2,6 +2,7 @@
 
 import { Montserrat } from "next/font/google";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import {
@@ -418,6 +419,7 @@ function CartIcon({ onClick }: { onClick?: () => void }) {
 }
 
 export default function Navbar() {
+  const pathname = usePathname();
   const { status: sessionStatus } = useSession();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -663,7 +665,11 @@ export default function Navbar() {
       ) : null}
 
       {accountOpen !== null && (
-        <LoginSignupModal open={accountOpen} onClose={() => setAccountOpen(false)} />
+        <LoginSignupModal
+          open={accountOpen}
+          onClose={() => setAccountOpen(false)}
+          redirectTo={pathname === "/cart" ? "/cart" : undefined}
+        />
       )}
     </header>
   );
