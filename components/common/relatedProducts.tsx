@@ -1,10 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { StoreProductCard } from "@/lib/store-products";
+import { getStoreProducts, type StoreProduct } from "@/lib/store-products";
 import { formatPrice } from "@/lib/format-price";
 import { ProductCardAddToCartIcon } from "./productCartActions";
 
-export default function RelatedProducts({ products }: { products: StoreProductCard[] }) {
+export default async function RelatedProducts({
+  category,
+  subcategory,
+  id,
+}: Pick<StoreProduct, "category" | "subcategory" | "id">) {
+  const products = await getStoreProducts({ category, subcategory, excludeId: id, limit: 10 });
   if (products.length === 0) return null;
 
   return (
