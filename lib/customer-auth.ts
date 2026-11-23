@@ -128,14 +128,7 @@ export async function registerCustomer(
     return { error: "Passwords do not match." };
   }
 
-  if (!emailVerificationIsConfigured()) {
-    return {
-      error: "Email verification is temporarily unavailable. Please try again later.",
-    };
-  }
-
   const customerId = new mongoose.Types.ObjectId();
-  const challenge = createVerificationChallenge(customerId);
 
   try {
     await connectMongoose();
@@ -146,13 +139,6 @@ export async function registerCustomer(
       email,
       passwordHash,
       isVerified: false,
-      emailVerification: {
-        challengeId: challenge.challengeId,
-        digest: challenge.digest,
-        expiresAt: challenge.expiresAt,
-        attemptsRemaining: challenge.attemptsRemaining,
-        lastSentAt: challenge.lastSentAt,
-      },
     });
   } catch (error) {
     if (isDuplicateEmailError(error)) {
@@ -164,25 +150,25 @@ export async function registerCustomer(
     return { error: "We could not create your account. Please try again." };
   }
 
-  const delivery = await sendVerificationCode(email, challenge.code);
-
-  if (!delivery.sent) {
-    await Customer.updateOne(
-      {
-        _id: customerId,
-        "emailVerification.challengeId": challenge.challengeId,
-      },
-      { $set: { "emailVerification.lastSentAt": new Date(0) } },
-    );
-
-    return verificationState(email, challenge.challengeId, {
-      error: "Your account was created, but the code could not be sent. Try again.",
+  try {
+    const redirectTo = field(formData, "redirectTo");
+    await signIn("customer-credentials", {
+      email,
+      password,
+      redirectTo:
+        redirectTo === "/cart" ? "/cart?auth=signup" : "/?auth=signup",
     });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return {
+        error: "Your account was created, but we could not log you in. Please log in to continue.",
+      };
+    }
+
+    throw error;
   }
 
-  return verificationState(email, challenge.challengeId, {
-    success: "We sent a verification code to your email.",
-  });
+  return {};
 }
 
 export async function verifyCustomerEmail(
@@ -424,10 +410,11 @@ export async function loginCustomer(
   }
 
   try {
+    const redirectTo = field(formData, "redirectTo");
     await signIn("customer-credentials", {
       email,
       password,
-      redirectTo: "/?auth=login",
+      redirectTo: redirectTo === "/cart" ? "/cart?auth=login" : "/?auth=login",
     });
   } catch (error) {
     if (error instanceof AuthError) {
