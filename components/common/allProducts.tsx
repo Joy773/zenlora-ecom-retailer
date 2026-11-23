@@ -168,7 +168,7 @@ function SplitCategory({
           className={`${productsCol} grid grid-cols-2 gap-3 px-5 pt-5 pb-12 md:grid-cols-3 md:gap-5 md:px-16 md:pt-8 md:pb-16 lg:px-20 lg:pt-0 lg:pb-20`}
         >
           {products.map((product) => (
-            <li key={product.href} className="h-full">
+            <li key={product.href} className="h-full md:[&:nth-child(n+4)]:hidden">
               <ProductCard product={product} />
             </li>
           ))}
@@ -294,12 +294,12 @@ export default async function AllProducts() {
       getStoreProducts({
         category: "skincare",
         type: "sunscreen",
-        limit: 3,
+        limit: 4,
       }),
       getStoreProducts({
         category: "skincare",
         type: "serum-oils",
-        limit: 3,
+        limit: 4,
       }),
       getStoreProducts({ limit: 6 }),
     ]);
