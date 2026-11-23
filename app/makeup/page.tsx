@@ -3,7 +3,10 @@ import { MakeupProducts } from "@/components/common/allProducts";
 import Category, { makeupCategoryGroups } from "@/components/common/category";
 import MakeupProductGrid from "@/components/common/makeupProductGrid";
 import Searchbar from "@/components/common/searchbar";
-import { getStoreProductPage } from "@/lib/store-products";
+import {
+  getStoreProductPage,
+  getStoreSubcategoryCounts,
+} from "@/lib/store-products";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -16,16 +19,22 @@ function valueOf(value: string | string[] | undefined) {
 async function MakeupPageContent({ searchParams }: PageProps) {
   const params = await searchParams;
   const flag = valueOf(params.flag);
-  const page = await getStoreProductPage({
-    category: "makeup",
-    type: valueOf(params.type),
-    concern: valueOf(params.concern),
-    search: valueOf(params.q),
-    price: valueOf(params.price)?.split(",").filter(Boolean),
-    isNewArrival: flag === "new" ? true : undefined,
-    isOffer: flag === "offer" ? true : undefined,
-    isBestSelling: flag === "best-selling" ? true : undefined,
-  }, valueOf(params.page));
+  const [page, counts] = await Promise.all([
+    getStoreProductPage(
+      {
+        category: "makeup",
+        type: valueOf(params.type),
+        concern: valueOf(params.concern),
+        search: valueOf(params.q),
+        price: valueOf(params.price)?.split(",").filter(Boolean),
+        isNewArrival: flag === "new" ? true : undefined,
+        isOffer: flag === "offer" ? true : undefined,
+        isBestSelling: flag === "best-selling" ? true : undefined,
+      },
+      valueOf(params.page),
+    ),
+    getStoreSubcategoryCounts("makeup"),
+  ]);
 
   return (
     <MakeupProducts
@@ -33,6 +42,7 @@ async function MakeupPageContent({ searchParams }: PageProps) {
       sidebar={
         <Category
           groups={makeupCategoryGroups}
+          counts={counts}
           basePath="/makeup"
           defaultOpen="Face"
         />
