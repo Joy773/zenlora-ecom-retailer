@@ -6,6 +6,7 @@ import { ProductCardAddToCartIcon } from "./productCartActions";
 
 export type Product = Pick<
   StoreProduct,
+  | "id"
   | "href"
   | "name"
   | "price"
@@ -20,6 +21,7 @@ export type Product = Pick<
 
 function toCartProduct(product: Product) {
   return {
+    productId: product.id,
     slug: product.slug ?? product.href.replace(/^\/product\//, ""),
     name: product.name,
     price: product.price,
